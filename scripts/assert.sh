@@ -40,9 +40,11 @@ t "lyric dist/main.js" test -f apps/lyric/dist/main.js
 t "meting dist/main.js" test -f apps/meting/dist/main.js
 t "gateway dist/main.js" test -f apps/gateway/dist/main.js
 
-echo "# S3 OpenAPI + Scalar"
-t "docs/api.html 存在" test -f docs/api.html
-t "docs/api.html 挂载 Scalar" grep -qi scalar docs/api.html
+echo "# S3 OpenAPI + Scalar + VitePress 文档站"
+t "docs/index.html 存在（VitePress 站点）" test -f docs/index.html
+t "docs/index.html 为 VitePress 构建" grep -qi "vitepress" docs/index.html
+t "docs/api/index.html 存在（API 总览）" test -f docs/api/index.html
+t "docs/intro/about.html 存在（关于页）" test -f docs/intro/about.html
 t "netease OpenAPI 440 条 paths" test "$(spec_paths netease)" = 440  # 423 为 P2 契约 harness 通过数（17 个需真实网络的模块跳过），公开路由实为 440
 t "kugou OpenAPI 226 条 paths" test "$(spec_paths kugou)" = 226
 t "netease /docs 接 Scalar" has apps/netease/src/server.ts @scalar/hono-api-reference
