@@ -1,0 +1,115 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Meting API (v2 · Hono/TS)",
+    "version": "2.0.0",
+    "description": "Meting-API TypeScript 移植版。P4 决议：仅保留 spotify/ytmusic provider（tencent/netease 已由原生服务覆盖）；server=tencent|netease 返回 400。type=url 无直链时 403；url 以 @ 开头时返回文本。"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3005"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "健康检查",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "状态页（HTML）",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/test": {
+      "get": {
+        "summary": "演示页（HTML）",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api": {
+      "get": {
+        "summary": "Meting 聚合解析",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "音源: spotify | ytmusic（默认 spotify）"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "song | playlist | url | pic | lrc（默认 playlist）"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "曲目/歌单 id（默认 7326220405）"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

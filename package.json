@@ -17,7 +17,9 @@
     "build": "turbo run build",
     "dev:gateway": "pnpm --filter @music-api/gateway dev",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "assert": "bash scripts/assert.sh",
+    "gen:openapi": "node scripts/gen-openapi.mjs"
   },
   "type": "module",
   "version": "2.0.0"

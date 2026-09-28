@@ -6,8 +6,8 @@
 export {
 	API_DOMAIN,
 	APP_CONF,
-	chooseUserAgent,
 	CLIENTLOG_DOMAIN3,
+	chooseUserAgent,
 	DOMAIN,
 	EAPI_DOMAIN,
 	resourceTypeMap,

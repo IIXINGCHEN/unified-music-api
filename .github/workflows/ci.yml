@@ -1,78 +1,59 @@
+# unified-music-api v2 CI（TypeScript/Hono monorepo）
+# 冻结栈：Node 22 LTS / pnpm 10 / Turborepo。
+# 门禁顺序：install → build → lint → test → scripts/assert.sh（≥40 项断言）。
+# 任一失败即整条流水线失败（企业开发规范：硬门禁，不许先上线后补）。
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2/rewrite]
   pull_request:
 
 jobs:
-  gateway:
-    name: gateway (Go)
+  ci:
+    name: build / lint / test / assert
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
-          cache-dependency-path: gateway/go.sum
-      - name: gofmt check (changed files)
-        run: |
-          cd gateway
-          test -z "$(gofmt -l internal/controller/platform_controller.go pkg/validator/validator.go)"
-      - name: go vet
-        run: cd gateway && go vet ./...
-      - name: go build
-        run: cd gateway && go build ./...
 
-  services:
-    name: services (Node syntax)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        # 版本取自 package.json 的 packageManager 字段（pnpm@10.34.5）
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: syntax check entry points
-        run: |
-          node --check services/netease/app.js
-          node --check services/kugou/app.js
-          node --check services/meting/node.js
-          node --check services/meting/app.js
-          node --check services/meting/src/providers/index.js
-          node --check services/meting/src/service/api.js
-      - name: meting provider allowlist
-        run: |
-          # 精简后只允许 spotify / ytmusic provider 存在
-          ls services/meting/src/providers/
-          test ! -e services/meting/src/providers/netease
-          test ! -e services/meting/src/providers/tencent
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      - name: build
+        run: pnpm build
+
+      - name: lint
+        run: pnpm lint
+
+      - name: test
+        run: pnpm test
+
+      - name: assert (P5 断言门禁)
+        run: bash scripts/assert.sh
 
   contracts:
-    name: contracts & compose
+    name: contracts (route counts)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-      - name: validate yaml files
-        run: |
-          pip install pyyaml -q
-          python - <<'EOF'
-          import yaml
-          for f in ["contracts/openapi.yaml", "deploy/docker-compose.yml"]:
-              yaml.safe_load(open(f))
-              print("OK", f)
-          spec = yaml.safe_load(open("contracts/openapi.yaml"))
-          assert "/api/v1/platform/{name}/{path}" in spec["paths"], "unified route missing"
-          names = spec["paths"]["/api/v1/platform/{name}/{path}"]["get"]["parameters"]
-          print("openapi paths:", list(spec["paths"].keys()))
-          EOF
-
-  assert:
-    name: repo assertions
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: run assert.sh
-        run: bash scripts/assert.sh
+          node-version: "22"
+          cache: pnpm
+      - name: install
+        run: pnpm install --frozen-lockfile
+      - name: netease contract 423/423
+        run: pnpm --filter @music-api/netease exec vitest run test/server.test.ts
+      - name: kugou contract 226/226
+        run: pnpm --filter @music-api/kugou exec vitest run test/server.test.ts

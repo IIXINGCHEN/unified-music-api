@@ -1,73 +1,149 @@
-# unified-music-api 一键编排
-# 网关 (Go) + 5 个平台微服务。网关统一入口：http://localhost:8080
+# unified-music-api v2 一键编排（TypeScript/Hono 全家桶）
+# 网关统一入口：http://localhost:8080
 # 各平台原生接口经由 /api/v1/platform/{name}/* 透传，零改动兼容。
+# 构建参数见 deploy/Dockerfile（单一参数化 Dockerfile，context 为仓库根）。
 name: unified-music-api
+
+x-app-build: &app-build
+  context: ..
+  dockerfile: deploy/Dockerfile
 
 services:
   gateway:
-    build: ../gateway
+    build:
+      <<: *app-build
+      args:
+        APP: gateway
+        PKG: "@music-api/gateway"
+        PORT: "5678"
+        ENTRY: main.js
     ports:
       - "8080:5678"
     environment:
       PORT: "5678"
+      HOST: "0.0.0.0"
       PLATFORM_NETEASE_URL: http://netease:3001
       PLATFORM_KUGOU_URL: http://kugou:3002
       PLATFORM_UNM_URL: http://unm:3003
       PLATFORM_LYRIC_URL: http://lyric:3004
       PLATFORM_METING_URL: http://meting:3005
     depends_on:
-      netease: { condition: service_started }
-      kugou: { condition: service_started }
-      unm: { condition: service_started }
-      lyric: { condition: service_started }
-      meting: { condition: service_started }
+      netease: { condition: service_healthy }
+      kugou: { condition: service_healthy }
+      unm: { condition: service_healthy }
+      lyric: { condition: service_healthy }
+      meting: { condition: service_healthy }
     restart: unless-stopped
 
-  # 网易云音乐全接口（440，api-enhanced 原样迁入）
+  # 网易云音乐全接口（440 模块，TS/Hono 移植）
   netease:
-    build: ../services/netease
+    build:
+      <<: *app-build
+      args:
+        APP: netease
+        PKG: "@music-api/netease"
+        PORT: "3001"
+        ENTRY: main.js
     environment:
       PORT: "3001"
+      HOST: "0.0.0.0"
     expose: ["3001"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      # 440 模块动态导入，冷启动约 30s
+      start_period: 120s
+      retries: 3
     restart: unless-stopped
 
-  # 酷狗音乐全接口（228，KuGouMusicApi 原样迁入）
+  # 酷狗音乐全接口（228 模块，TS/Hono 移植）
   kugou:
-    build: ../services/kugou
+    build:
+      <<: *app-build
+      args:
+        APP: kugou
+        PKG: "@music-api/kugou"
+        PORT: "3002"
+        ENTRY: main.js
     environment:
       PORT: "3002"
+      HOST: "0.0.0.0"
     expose: ["3002"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
     restart: unless-stopped
 
-  # 解灰 / 多源匹配（unm-music-api 原样迁入）
+  # 解灰 / 多源匹配（unm-music-api 迁入）
   unm:
-    build: ../services/unm
+    build:
+      <<: *app-build
+      args:
+        APP: unm
+        PKG: "@music-api/unm"
+        PORT: "3003"
+        ENTRY: index.js
     environment:
       PORT: "3003"
       HOST: "0.0.0.0"
+      # 开发默认值；生产必须换成足够长的随机字符串（无密钥进程拒绝启动）
+      MONITOR_SECRET_KEY: "${MONITOR_SECRET_KEY:-dev-only-change-me-in-production}"
     expose: ["3003"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3003/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
     restart: unless-stopped
 
-  # TTML 逐字歌词（Lyric-Atlas-API + 独立运行入口）
+  # 逐字歌词（Lyric-Atlas-API 迁入，Edge→Node）
   lyric:
-    build: ../services/lyric
+    build:
+      <<: *app-build
+      args:
+        APP: lyric
+        PKG: "@music-api/lyric"
+        PORT: "3004"
+        ENTRY: main.js
     environment:
       PORT: "3004"
+      HOST: "0.0.0.0"
       # 回退链路直连内部网易云服务，无需外部 API
       EXTERNAL_NCM_API_URL: http://netease:3001/lyric
     expose: ["3004"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3004/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
     restart: unless-stopped
 
-  # Meting 精简版（仅 spotify / ytmusic 独有 provider）
+  # Meting 聚合（仅 spotify/ytmusic provider，TS 移植）
   meting:
     build:
-      context: ../services/meting
+      <<: *app-build
       args:
+        APP: meting
+        PKG: "@music-api/meting"
         PORT: "3005"
+        ENTRY: main.js
     environment:
       PORT: "3005"
-      # SPOTIFY_API / YT_API：上游解析后端地址（原项目依赖作者部署的解析服务），按需配置；未配置时对应 provider 返回 500（上游原生行为）
-      # SPOTIFY_API: https://your-spotify-backend.example
-      # YT_API: https://your-ytmusic-backend.example
+      HOST: "0.0.0.0"
+      # 上游 API（可选；缺失时对应 provider 能力失败，属原生行为）
+      SPOTIFY_API: "${SPOTIFY_API:-}"
+      YT_API: "${YT_API:-}"
     expose: ["3005"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3005/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
     restart: unless-stopped

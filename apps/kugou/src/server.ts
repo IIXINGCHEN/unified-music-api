@@ -14,6 +14,7 @@
  */
 
 import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { serve } from "@hono/node-server";
@@ -43,6 +44,7 @@ import {
 	isUUIDv4,
 	randomString,
 } from "@music-api/kugou-crypto";
+import { Scalar } from "@scalar/hono-api-reference";
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import qs from "qs";
@@ -349,6 +351,21 @@ export async function constructServer(
 	);
 
 	app.get("/health", (c) => c.json({ status: "ok", service: "kugou" }));
+
+	// API 文档（Scalar）：spec 来自 apps/kugou/openapi.json
+	//（scripts/gen-openapi.mjs 生成）。注：`app.use("/docs/*", serveStatic)`
+	// 仅匹配 /docs/ 子路径，与此精确路由无冲突。
+	app.get(
+		"/docs",
+		Scalar({
+			spec: {
+				content: createRequire(import.meta.url)("../openapi.json") as Record<
+					string,
+					unknown
+				>,
+			},
+		}),
+	);
 
 	const defs = moduleDefs ?? (await getModuleDefinitions());
 	for (const def of defs) {

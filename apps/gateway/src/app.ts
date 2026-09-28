@@ -9,6 +9,8 @@
  * port applies the middleware as intended (documented in parity-p3-gateway.md).
  */
 
+import { createRequire } from "node:module";
+import { Scalar } from "@scalar/hono-api-reference";
 import type { Context, Next } from "hono";
 import { Hono } from "hono";
 import type { GatewayConfig } from "./config.js";
@@ -125,6 +127,19 @@ export function createApp(cfg: GatewayConfig, deps: AppDeps = {}): BuiltApp {
 
 	// ---- routes ----
 	app.route("/", healthRoutes(health, metrics));
+
+	// API 文档（Scalar）：spec 来自 apps/gateway/openapi.json（scripts/gen-openapi.mjs 生成）
+	app.get(
+		"/docs",
+		Scalar({
+			spec: {
+				content: createRequire(import.meta.url)("../openapi.json") as Record<
+					string,
+					unknown
+				>,
+			},
+		}),
+	);
 	app.route(
 		"/",
 		rootRoutes({

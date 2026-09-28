@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { Scalar } from "@scalar/hono-api-reference";
 import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
@@ -266,6 +268,19 @@ const handleDashboard = async (c: Context<AppEnv>) => {
 
 app.get("/dashboard", handleDashboard);
 app.get("/monitor", handleDashboard);
+
+// API 文档（Scalar）：spec 来自 apps/unm/openapi.json（scripts/gen-openapi.mjs 生成）
+app.get(
+	"/docs",
+	Scalar({
+		spec: {
+			content: createRequire(import.meta.url)("../openapi.json") as Record<
+				string,
+				unknown
+			>,
+		},
+	}),
+);
 
 // serveStatic 根目录用绝对路径：相对 "./public" 依赖进程 cwd，
 // systemd/PM2 等换启动目录即静默 404。

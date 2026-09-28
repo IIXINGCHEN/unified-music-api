@@ -35,6 +35,7 @@ import {
 	type NcmRequestFn,
 	type NcmResponse,
 } from "@music-api/ncm-core";
+import { Scalar } from "@scalar/hono-api-reference";
 import { Hono } from "hono";
 import type { StatusCode } from "hono/utils/http-status";
 import { logger } from "./logger.js";
@@ -266,6 +267,18 @@ export async function constructServer(
 	app.use(responseCache({ ttlMs: 2 * 60 * 1000 }));
 
 	app.get("/health", (c) => c.json({ status: "ok", service: "netease" }));
+
+	// API 文档（Scalar）：spec 来自 apps/netease/openapi.json
+	//（scripts/gen-openapi.mjs 生成；createRequire 使 src(tsx)/dist(node)
+	// 两种运行方式都能解析到包根下的 openapi.json）。
+	app.get(
+		"/docs",
+		Scalar({
+			spec: {
+				content: require("../openapi.json") as Record<string, unknown>,
+			},
+		}),
+	);
 
 	const moduleDefinitions = moduleDefs ?? (await getModuleDefinitions());
 

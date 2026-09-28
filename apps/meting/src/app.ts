@@ -3,6 +3,9 @@
  *
  * Routes: GET /api, GET /test, GET / (status page), GET /health.
  */
+
+import { createRequire } from "node:module";
+import { Scalar } from "@scalar/hono-api-reference";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -19,6 +22,19 @@ export function createApp(): Hono {
 	app.get("/api", api);
 	app.get("/test", testHandler);
 	app.get("/health", (c) => c.json({ status: "ok", service: "meting" }));
+
+	// API 文档（Scalar）：spec 来自 apps/meting/openapi.json（scripts/gen-openapi.mjs 生成）
+	app.get(
+		"/docs",
+		Scalar({
+			spec: {
+				content: createRequire(import.meta.url)("../openapi.json") as Record<
+					string,
+					unknown
+				>,
+			},
+		}),
+	);
 	app.get("/", (c) => {
 		const base = get_url(c);
 		return c.html(`

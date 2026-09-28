@@ -10,7 +10,8 @@
     "qrcode": "^1.5.4",
     "jsdom": "^24.1.3",
     "music-metadata": "^11.15.0",
-    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.4.4"
+    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.4.4",
+    "@scalar/hono-api-reference": "^0.8.0"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

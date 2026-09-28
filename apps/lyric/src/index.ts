@@ -10,6 +10,8 @@
  *   vitest) alive on its own; the running server keeps the loop alive.
  */
 
+import { createRequire } from "node:module";
+import { Scalar } from "@scalar/hono-api-reference";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -48,6 +50,19 @@ export function createApp(): Hono {
 	const app = new Hono();
 
 	app.get("/health", (c) => c.json({ status: "ok", service: "lyric" }));
+
+	// API 文档（Scalar）：spec 来自 apps/lyric/openapi.json（scripts/gen-openapi.mjs 生成）
+	app.get(
+		"/docs",
+		Scalar({
+			spec: {
+				content: createRequire(import.meta.url)("../openapi.json") as Record<
+					string,
+					unknown
+				>,
+			},
+		}),
+	);
 
 	const api = app.basePath("/api");
 

@@ -15,18 +15,18 @@ export {
 	randomString,
 } from "./codec.js";
 export {
-  appid,
-  clientver,
-  liteAppid,
-  liteClientver,
-  apiver,
-  srcappid,
-  wx_appid,
-  wx_lite_appid,
-  wx_secret,
-  wx_lite_secret,
-  qq_appid,
-  qq_lite_appid,
+	apiver,
+	appid,
+	clientver,
+	liteAppid,
+	liteClientver,
+	qq_appid,
+	qq_lite_appid,
+	srcappid,
+	wx_appid,
+	wx_lite_appid,
+	wx_lite_secret,
+	wx_secret,
 } from "./config.js";
 export type { AesEncryptOptions, PlaylistCipher } from "./crypto.js";
 export {

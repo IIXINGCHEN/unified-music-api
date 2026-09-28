@@ -1,0 +1,125 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lyric Atlas API (v2 · Hono)",
+    "version": "2.0.0",
+    "description": "Lyric-Atlas-API 迁移版（Vercel Edge → Node）。需环境变量 EXTERNAL_NCM_API_URL 指向网易云服务；未设置时搜索接口返回 500（原版行为）。"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3004"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "健康检查",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/": {
+      "get": {
+        "summary": "服务根（运行状态消息）",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "summary": "按网易云歌曲 id 搜索歌词",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "网易云歌曲 id"
+          },
+          {
+            "name": "fallback",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "主源无结果时回退查询"
+          },
+          {
+            "name": "fixedVersion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "锁定指定版本"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lyrics/meta": {
+      "get": {
+        "summary": "歌词元数据",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "网易云歌曲 id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "上游透传 JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
