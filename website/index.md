@@ -3,10 +3,13 @@ layout: home
 
 hero:
   name: unified-music-api
-  text: 统一音乐 API
-  tagline: 网易云 440 · 酷狗 226 · UNM · Lyric · Meting —— 六个微服务，一个文档
+  text: 统一音乐 API 文档
+  tagline: 网易云 440 接口 · 酷狗 226 接口 · UNM 解灰 · TTML 歌词 · Meting 聚合 —— 六个微服务，一份文档，一个网关。
   actions:
     - theme: brand
+      text: 开始使用
+      link: /guide/quickstart
+    - theme: alt
       text: API 文档
       link: /api/
     - theme: alt
@@ -14,16 +17,34 @@ hero:
       link: https://github.com/IIXINGCHEN/unified-music-api
 
 features:
-  - title: 网易云音乐
-    details: 440 个接口，参数表由源码自动提取，直连 :3001
+  - icon: 🎵
+    title: 网易云音乐
+    details: 440 个接口全量覆盖，参数表由源码自动提取，与上游逐模块比对零缺失。
     link: /api/netease
-  - title: 酷狗音乐
-    details: 226 个接口，直连 :3002
+    linkText: 查看接口
+  - icon: 🎧
+    title: 酷狗音乐
+    details: 226 个接口完整承接，搜索 / 歌曲 / 歌单 / 歌手全链路可用。
     link: /api/kugou
-  - title: UNM 解灰
-    details: 歌曲匹配 / 直链 / 搜索 / 封面 / 歌词，直连 :3003
+    linkText: 查看接口
+  - icon: 🔓
+    title: UNM 解灰
+    details: 灰色歌曲解锁，多源匹配（QQ / 酷狗 / 咪咕 / JOOX），直链 / 封面 / 歌词。
     link: /api/unm
-  - title: 统一网关
-    details: 五平台反代 /api/v1/platform/{name}/{path}，聚合接口 :8080
+    linkText: 查看路由
+  - icon: 📝
+    title: TTML 逐字歌词
+    details: 高精度逐字歌词服务，搜索 / 下载 / 解析， karaoke 级时间轴。
+    link: /api/lyric
+    linkText: 查看路由
+  - icon: 🔀
+    title: Meting 聚合
+    details: 多平台音乐聚合解析（spotify / ytmusic），统一返回格式。
+    link: /api/meting
+    linkText: 查看路由
+  - icon: 🌐
+    title: 统一网关
+    details: 一个入口反代五平台：/api/v1/platform/{name}/{path}，鉴权 / 限流开箱即用。
     link: /api/gateway
+    linkText: 查看路由
 ---

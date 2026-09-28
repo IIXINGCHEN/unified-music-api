@@ -15,6 +15,7 @@ export default defineConfig({
     },
   },
   themeConfig: {
+    logo: "/logo.svg",
     nav: [
       { text: "指南", link: "/intro/about" },
       { text: "API 文档", link: "/api/" },

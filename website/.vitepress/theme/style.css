@@ -1,0 +1,159 @@
+/**
+ * unified-music-api 文档站 · 音乐美学主题
+ * 品牌色：鸢尾紫 → 青蓝渐变（音乐律动）
+ */
+
+:root {
+  /* 品牌色系 */
+  --vp-c-brand-1: #7c5cff;
+  --vp-c-brand-2: #6a4de6;
+  --vp-c-brand-3: #5a3fd4;
+  --vp-c-brand-soft: rgba(124, 92, 255, 0.14);
+
+  /* 首页 hero 渐变 */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #7c5cff 10%, #00c2d8 90%);
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #7c5cff 30%, #00c2d8 70%);
+  --vp-home-hero-image-filter: blur(72px);
+
+  /* 按钮 */
+  --vp-button-brand-bg: linear-gradient(135deg, #7c5cff, #5a3fd4);
+  --vp-button-brand-hover-bg: linear-gradient(135deg, #8d6fff, #6a4de6);
+}
+
+.dark {
+  --vp-c-brand-1: #9d86ff;
+  --vp-c-brand-2: #8d6fff;
+  --vp-c-brand-3: #7c5cff;
+  --vp-c-brand-soft: rgba(157, 134, 255, 0.16);
+  --vp-home-hero-name-background: linear-gradient(120deg, #9d86ff 10%, #22d3ee 90%);
+}
+
+/* ---------- 首页 hero ---------- */
+.VPHome .name {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.VPHome .text {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.VPHome .tagline {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--vp-c-text-2);
+  max-width: 560px;
+}
+
+/* ---------- 特性卡片 ---------- */
+.VPFeatures .VPFeature {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  background: var(--vp-c-bg-soft);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.VPFeatures .VPFeature:hover {
+  transform: translateY(-4px);
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 12px 32px -12px var(--vp-c-brand-soft), 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.VPFeatures .VPFeature .icon {
+  border-radius: 12px;
+  background: var(--vp-c-brand-soft);
+  font-size: 22px;
+}
+.VPFeatures .VPFeature .title {
+  font-weight: 700;
+}
+
+/* ---------- 按钮 ---------- */
+.VPHome .actions .VPButton.brand {
+  border: none;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #7c5cff, #5a3fd4);
+  box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.VPHome .actions .VPButton.brand:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 12px 28px -8px rgba(124, 92, 255, 0.6);
+}
+
+/* ---------- 文档页 ---------- */
+/* 标题渐变装饰线 */
+.vp-doc h1 {
+  letter-spacing: -0.02em;
+}
+.vp-doc h2 {
+  margin-top: 2.2em;
+  padding-top: 1.2em;
+  font-weight: 700;
+}
+/* 行内代码更柔和 */
+.vp-doc :not(pre) > code {
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 0.88em;
+}
+/* 表格美化 */
+.vp-doc table {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+}
+.vp-doc th {
+  background: var(--vp-c-bg-soft);
+  font-weight: 700;
+}
+/* 代码块圆角与阴影 */
+.vp-doc div[class*="language-"] {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- 顶栏 ---------- */
+.VPNavBar {
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+.VPNavBarTitle .title {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+/* 导航链接悬停 */
+.VPNavBarMenuLink:hover {
+  color: var(--vp-c-brand-1);
+}
+
+/* ---------- 侧边栏 ---------- */
+.VPSidebarItem.is-active > .item > .link {
+  font-weight: 600;
+}
+/* 大纲激活项渐变指示条 */
+.VPDocAsideOutline .outline-link.active {
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+}
+
+/* ---------- 选中文本 ---------- */
+::selection {
+  background: var(--vp-c-brand-soft);
+}
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vp-c-divider);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-brand-soft);
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
