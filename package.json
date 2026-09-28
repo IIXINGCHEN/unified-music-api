@@ -19,7 +19,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "assert": "bash scripts/assert.sh",
-    "gen:openapi": "node scripts/gen-openapi.mjs"
+    "gen:openapi": "node scripts/gen-openapi.mjs",
+    "dev": "turbo run dev"
   },
   "type": "module",
   "version": "2.0.0"
