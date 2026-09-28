@@ -1,16 +1,23 @@
 {
-  "devDependencies": {
-    "typescript": "^5.8.0",
-    "vitest": "^3.2.0",
-    "@types/node": "^24.0.0"
-  },
   "name": "@music-api/kugou-crypto",
+  "version": "2.0.0",
   "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "biome check src",
     "test": "vitest run"
   },
-  "type": "module",
-  "version": "2.0.0"
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0",
+    "@types/node": "^24.0.0"
+  }
 }
