@@ -30,12 +30,12 @@ export function send<T>(
 	code: number,
 	message: string,
 	data?: T,
-) {
+): Response {
 	return c.json(envelope(code, message, data), httpStatus as never);
 }
 
 /** 200 + code 200 envelope. */
-export function ok<T>(c: Context, message: string, data?: T) {
+export function ok<T>(c: Context, message: string, data?: T): Response {
 	return send(c, 200, 200, message, data);
 }
 
@@ -45,19 +45,19 @@ export function fail(
 	httpStatus: number,
 	code: number,
 	message: string,
-) {
+): Response {
 	return send(c, httpStatus, code, message);
 }
 
-export const badRequest = (c: Context, message: string) =>
+export const badRequest = (c: Context, message: string): Response =>
 	fail(c, 400, 400, message);
-export const unauthorized = (c: Context, message: string) =>
+export const unauthorized = (c: Context, message: string): Response =>
 	fail(c, 401, 401, message);
-export const forbidden = (c: Context, message: string) =>
+export const forbidden = (c: Context, message: string): Response =>
 	fail(c, 403, 403, message);
-export const notFound = (c: Context, message: string) =>
+export const notFound = (c: Context, message: string): Response =>
 	fail(c, 404, 404, message);
-export const internalError = (c: Context, message: string) =>
+export const internalError = (c: Context, message: string): Response =>
 	fail(c, 500, 500, message);
-export const serviceUnavailable = (c: Context, message: string) =>
+export const serviceUnavailable = (c: Context, message: string): Response =>
 	fail(c, 503, 503, message);

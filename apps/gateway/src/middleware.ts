@@ -8,7 +8,7 @@
 
 import { timingSafeEqual } from "node:crypto";
 import { getConnInfo } from "@hono/node-server/conninfo";
-import type { Context, Next } from "hono";
+import type { Context, MiddlewareHandler, Next } from "hono";
 import { cors as honoCors } from "hono/cors";
 import { createMiddleware } from "hono/factory";
 import type { GatewayConfig } from "./config.js";
@@ -244,7 +244,7 @@ function isHTTPS(c: Context): boolean {
  * API-key / admin-key auth middleware.
  * Order mirrors Go: HTTPS -> User-Agent -> whitelist -> rate limit -> key check.
  */
-export function authMiddleware(opts: AuthOptions) {
+export function authMiddleware(opts: AuthOptions): MiddlewareHandler {
 	const adminLimiter = opts.admin
 		? new RateLimiter(Math.max(1, Math.floor(opts.rateLimitPerMin / 4)), 60_000)
 		: null;
@@ -353,7 +353,7 @@ export function corsMiddleware(cfg: GatewayConfig["security"]["cors"]) {
 }
 
 /** Recovery middleware: panic -> 500 envelope (Go recovery plugin port). */
-export function recoveryMiddleware() {
+export function recoveryMiddleware(): MiddlewareHandler {
 	return createMiddleware(async (c: Context, next: Next) => {
 		try {
 			await next();

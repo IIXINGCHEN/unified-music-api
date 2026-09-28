@@ -190,7 +190,7 @@ export function rootRoutes(opts: RootOptions): Hono {
 }
 
 /** Not-found handler: 405 when the path matches a known route, else 404. */
-export function notFoundHandler(c: Context) {
+export function notFoundHandler(c: Context): Response {
 	const path = new URL(c.req.url).pathname;
 	if (matchesKnownRoute(path)) {
 		return fail(c, 405, 405, "方法不允许");
