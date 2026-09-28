@@ -72,7 +72,7 @@ GET/POST /api/v1/platform/{name}/{path}?query...
 ## API 文档
 
 - **完整调用文档**：[`docs/API.md`](docs/API.md)（440 网易云 + 226 酷狗 + 网关/UNM/Lyric/Meting，含参数表，由 `scripts/gen-api-docs.py` 从源码生成）
-- **独立文档页面**：[`docs/api-reference.html`](docs/api-reference.html)（单文件、离线可用，搜索 + 按服务筛选，由 `scripts/gen-api-page.py` 生成，VitePress 风格）
+- **独立文档页面**：[api-reference.html](https://iixingchen.github.io/unified-music-api/api-reference.html)（单文件、离线可用，搜索 + 按服务筛选，由 `scripts/gen-api-page.py` 生成，VitePress 风格）
 - 各服务 `/docs`（Scalar，运行时生成）
 - 文档枢纽：[`docs/api.html`](docs/api.html)
 - 需求基线：[`docs/PRD.md`](docs/PRD.md) · 兼容性对照：[`docs/parity.md`](docs/parity.md)
