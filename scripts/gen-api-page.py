@@ -128,12 +128,18 @@ header { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, v
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--vp-c-divider); padding: 12px 24px; }
 .nav-row { max-width: 1152px; margin: 0 auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.brand { font-weight: 700; font-size: 16px; letter-spacing: -.01em; white-space: nowrap; }
-.brand span { color: var(--vp-c-text-3); font-weight: 400; font-size: 13px; margin-left: 8px; }
+.brand { font-weight: 700; font-size: 16px; letter-spacing: -.01em; white-space: nowrap;
+  background: linear-gradient(120deg, var(--vp-c-brand-1), #5c73e7);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.brand span { color: var(--vp-c-text-3); font-weight: 400; font-size: 13px; margin-left: 8px;
+  -webkit-text-fill-color: var(--vp-c-text-3); }
 #search { flex: 1; min-width: 180px; max-width: 420px; padding: 8px 12px 8px 36px; border-radius: 8px;
   border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 12px center;
   color: var(--vp-c-text-1); font-size: 14px; outline: none; }
 #search:focus { border-color: var(--vp-c-brand-1); }
+html.dark #search { background-color: #2b2b30; }
+html.dark .tabs button { background: #2b2b30; }
+html.dark .theme-btn { background: #2b2b30; }
 #search::placeholder { color: var(--vp-c-text-3); }
 .theme-btn { margin-left: auto; border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft);
   border-radius: 8px; width: 36px; height: 36px; cursor: pointer; font-size: 16px; color: var(--vp-c-text-2); }
@@ -266,7 +272,7 @@ $("search").addEventListener("input", (e) => {
 
 (function init() {
   const saved = localStorage.getItem("vp-theme");
-  const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const dark = saved ? saved === "dark" : true; // 默认深色，对标 dujiao-next.com
   document.documentElement.classList.toggle("dark", dark);
   const btn = document.getElementById("themeBtn");
   const paint = () => btn.textContent = document.documentElement.classList.contains("dark") ? "☀️" : "🌙";
