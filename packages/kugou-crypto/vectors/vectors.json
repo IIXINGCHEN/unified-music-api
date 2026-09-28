@@ -1,0 +1,383 @@
+[
+  {
+    "name": "md5.ascii",
+    "input": {
+      "data": "hello"
+    },
+    "expected": "5d41402abc4b2a76b9719d911017c592"
+  },
+  {
+    "name": "md5.empty",
+    "input": {
+      "data": ""
+    },
+    "expected": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  {
+    "name": "md5.unicode",
+    "input": {
+      "data": "中文🎵"
+    },
+    "expected": "12490765ca8ffbd3491b3bd70210dd5b"
+  },
+  {
+    "name": "md5.object",
+    "input": {
+      "data": {
+        "a": 1,
+        "b": "x"
+      }
+    },
+    "expected": "75a6ce4be04f5075316047b75a98d8eb",
+    "note": "object -> JSON.stringify"
+  },
+  {
+    "name": "md5.buffer",
+    "input": {
+      "data": "base64:AAEC/w=="
+    },
+    "expected": "ad92df6bdef95cdeca97cffc1b3634a6",
+    "note": "Buffer -> JSON.stringify {\"type\":\"Buffer\",...}"
+  },
+  {
+    "name": "sha1.ascii",
+    "input": {
+      "data": "hello"
+    },
+    "expected": "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
+  },
+  {
+    "name": "sha1.unicode",
+    "input": {
+      "data": "中文🎵"
+    },
+    "expected": "b58302309592b2cf990230c0c826c787122258b4"
+  },
+  {
+    "name": "aes.encrypt.fixed",
+    "input": {
+      "data": "hello world",
+      "key": "0123456789abcdef",
+      "iv": "fedcba9876543210"
+    },
+    "expected": "1230aa04e547a446d75c38ce7b6d10d6"
+  },
+  {
+    "name": "aes.decrypt.fixed",
+    "input": {
+      "cipher": "1230aa04e547a446d75c38ce7b6d10d6",
+      "key": "0123456789abcdef",
+      "iv": "fedcba9876543210"
+    },
+    "expected": "hello world"
+  },
+  {
+    "name": "aes.encrypt.object",
+    "input": {
+      "data": {
+        "a": 1,
+        "b": "x"
+      },
+      "key": "0123456789abcdef",
+      "iv": "fedcba9876543210"
+    },
+    "expected": "7d7a874cb300ec29fdc14807fbfb0cc2"
+  },
+  {
+    "name": "aes.decrypt.object",
+    "input": {
+      "cipher": "7d7a874cb300ec29fdc14807fbfb0cc2",
+      "key": "0123456789abcdef",
+      "iv": "fedcba9876543210"
+    },
+    "expected": {
+      "a": 1,
+      "b": "x"
+    },
+    "note": "returns parsed JSON"
+  },
+  {
+    "name": "aes.encrypt.derived",
+    "input": {
+      "data": "derived-key-test",
+      "key": "mytempkey1234567"
+    },
+    "expected": "4e16dbdcd6e33344b71413d244e7682cd75fadb7f17352b0e14944221176d019"
+  },
+  {
+    "name": "aes.decrypt.derived",
+    "input": {
+      "cipher": "4e16dbdcd6e33344b71413d244e7682cd75fadb7f17352b0e14944221176d019",
+      "key": "mytempkey1234567"
+    },
+    "expected": "derived-key-test"
+  },
+  {
+    "name": "aes.decrypt.randomKey",
+    "input": {
+      "cipher": "2b0b625dfc34fbfe09000b78c32c88d3a9a812e00c1d0f610a030a9ff708bee8",
+      "key": "pvk4jysjp0l77cri"
+    },
+    "expected": "random-key-plain",
+    "note": "recorded run; decrypt must equal plaintext"
+  },
+  {
+    "name": "playlist.decrypt",
+    "input": {
+      "key": "06ip7z",
+      "str": "U8QeEjupCx3w66FBP1KKIJerssC5YLEoNWPugpyLlZY="
+    },
+    "expected": "playlist-test-123",
+    "note": "recorded run"
+  },
+  {
+    "name": "rsa.raw",
+    "input": {
+      "data": "hello-rsa"
+    },
+    "expected": "b4633cf99442616abf9fb8be86993374a23eb3ca179f0cf7413e4c1e93191c40b6c964de2abb761905e2887f58d9d05af46e4c32ffe52a557d413c7bc3b3ad628111b247ccf17cbcc09fbedd691d931c3aeefe18a375be7352b747a1a34f34d80a965c4c42e87035aed5dd9ad8a79d8837bbd75bea32eaa22facd853cf305011",
+    "note": "raw RSA, no padding randomness"
+  },
+  {
+    "name": "rsa.pkcs1.format",
+    "input": {
+      "data": "hello-rsa2"
+    },
+    "expected": {
+      "len": 256,
+      "sample": "53e23dd50378b37c106b11faea608d5f"
+    },
+    "note": "format only: hex len 256"
+  },
+  {
+    "name": "sign.web.basic",
+    "input": {
+      "params": {
+        "b": "2",
+        "a": "1"
+      }
+    },
+    "expected": "70ccbef64fdcc9271fe883d1d7f07395"
+  },
+  {
+    "name": "sign.web.sortTrap",
+    "input": {
+      "params": {
+        "a": "x",
+        "a1": "y"
+      }
+    },
+    "expected": "94cfaa3179384c4c24dc7675f8b5e698",
+    "note": "MUST be md5(salt + \"a1=ya=x\" + salt): sorts joined \"k=v\" strings, NOT keys"
+  },
+  {
+    "name": "sign.web.withData",
+    "input": {
+      "params": {
+        "a": "1"
+      },
+      "data": "{\"x\":1}"
+    },
+    "expected": "877011e8a2f2872b7d921b2152ef0209"
+  },
+  {
+    "name": "sign.android.basic",
+    "input": {
+      "params": {
+        "b": "2",
+        "a": "1"
+      }
+    },
+    "expected": "b97698f1a4fbf02b349ca851b5dce224"
+  },
+  {
+    "name": "sign.android.objectValue",
+    "input": {
+      "params": {
+        "filter": {
+          "a": 1
+        },
+        "b": "2"
+      }
+    },
+    "expected": "08eefd698cc54900b7a4efbcca9a1cfb",
+    "note": "object values JSON.stringify before sort"
+  },
+  {
+    "name": "sign.android.bufferBody",
+    "input": {
+      "params": {
+        "a": "1"
+      },
+      "data": "base64:AAECAw=="
+    },
+    "expected": "83d0c6fee921b93c592b4d7b327d7578",
+    "note": "Buffer body -> incremental MD5 path"
+  },
+  {
+    "name": "sign.android.lite",
+    "input": {
+      "params": {
+        "b": "2",
+        "a": "1"
+      },
+      "platform": "lite"
+    },
+    "expected": "bc040a436f0cfec4f1489d8c8674833f"
+  },
+  {
+    "name": "sign.register",
+    "input": {
+      "params": {
+        "k1": "b",
+        "k2": "a",
+        "k3": "c"
+      }
+    },
+    "expected": "480cd6b438aec4c7d8a694e93fd9d093",
+    "note": "values-only sorted"
+  },
+  {
+    "name": "sign.signParams",
+    "input": {
+      "params": {
+        "b": "2",
+        "a": "1"
+      },
+      "data": "bodydata"
+    },
+    "expected": "b2c4c3f9f936a4a4f8cfe4fcbb2bbad1",
+    "note": "key+value, no equals"
+  },
+  {
+    "name": "sign.signKey.defaults",
+    "input": {
+      "hash": "abc123",
+      "mid": "mid456"
+    },
+    "expected": "6ae0f0df649fa86da16feb87f2b390dc",
+    "note": "userid->0, appid->1005"
+  },
+  {
+    "name": "sign.signKey.explicit",
+    "input": {
+      "hash": "abc123",
+      "mid": "mid456",
+      "userid": 12345,
+      "appid": 9999
+    },
+    "expected": "1b4336590f15ef6d72ed674abf053380"
+  },
+  {
+    "name": "sign.signParamsKey.defaults",
+    "input": {
+      "data": "data123"
+    },
+    "expected": "707af14dcebab70b6532f7850f05410c",
+    "note": "appid->1005, clientver->20489"
+  },
+  {
+    "name": "sign.signParamsKey.explicit",
+    "input": {
+      "data": "d",
+      "appid": 9999,
+      "clientver": 12345
+    },
+    "expected": "46ef1dd5d2f0efdf4e7d45eeb54bbbe8"
+  },
+  {
+    "name": "sign.signCloudKey",
+    "input": {
+      "hash": "hash1",
+      "pid": "pid9"
+    },
+    "expected": "feb8a60f6c94feb4a078c1b9ea833287"
+  },
+  {
+    "name": "mid.guid",
+    "input": {
+      "guid": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "expected": "308741372901437977228425563242293240765"
+  },
+  {
+    "name": "krc.decode",
+    "input": {
+      "blobBase64": "a3JjMTjb6kFugkZ3hQUBpQOao6CJEEm4cfg9ptswuLdMlvGFHbcVnoCl2ZzOQX4qxcl06cR4rZiFOHQmUyDx"
+    },
+    "expected": "[00:01.00]hello world\n[00:05.00]你好酷狗\n[00:10.00]🎵"
+  },
+  {
+    "name": "krc.decode.invalid",
+    "input": {
+      "blobBase64": "aGVsbG8="
+    },
+    "expected": "",
+    "note": "garbage -> empty string"
+  },
+  {
+    "name": "cookie.toJson",
+    "input": {
+      "cookie": "token=abc; userid=123"
+    },
+    "expected": {
+      "token": "abc",
+      " userid": "123"
+    },
+    "note": "no trim, split on first ="
+  },
+  {
+    "name": "cookie.parseString",
+    "input": {
+      "cookie": "token=abc; Domain=.kugou.com; path=/; HttpOnly"
+    },
+    "expected": "token=abc; HttpOnly"
+  },
+  {
+    "name": "uuid.isV4.true",
+    "input": {
+      "s": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "expected": true
+  },
+  {
+    "name": "uuid.isV4.false",
+    "input": {
+      "s": "not-a-uuid"
+    },
+    "expected": false
+  },
+  {
+    "name": "sign.signKey.lite",
+    "input": {
+      "hash": "abc123",
+      "mid": "mid456",
+      "platform": "lite"
+    },
+    "expected": "774d35b8498e8d3739a2883ee66ffa69"
+  },
+  {
+    "name": "sign.signParamsKey.lite",
+    "input": {
+      "data": "data123",
+      "platform": "lite"
+    },
+    "expected": "0a8fab920d3cff54a0794d8c08e2ffb6"
+  },
+  {
+    "name": "webgl.browser",
+    "input": {
+      "stub": "deterministic-fake-gl-v1"
+    },
+    "expected": "12909219980120779806",
+    "note": "FNV-1a over stub pixels + meta"
+  },
+  {
+    "name": "webgl.browser.noext",
+    "input": {
+      "stub": "fake-gl-v1-noext-fallback-ctx"
+    },
+    "expected": "11416259335548597625",
+    "note": "getContext fallback + getExtension null"
+  }
+]
