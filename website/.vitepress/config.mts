@@ -6,6 +6,7 @@ export default defineConfig({
   description: "统一音乐 API · 官方文档",
   // GitHub Pages 项目站点路径
   base: "/unified-music-api/",
+  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/unified-music-api/logo.svg" }]],
   // 构建输出到仓库 docs/（GitHub Pages 源）
   // 注意：不清空 outDir，保留 docs/ 下的项目文档（*.md）
   outDir: "../docs",
