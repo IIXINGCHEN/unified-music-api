@@ -1092,9 +1092,13 @@ export async function searchLyrics(
 		logger: BasicLogger;
 	},
 ): Promise<SearchResult> {
-	const { logger } = options;
-	logger.info("searchLyrics called, but it's a placeholder in this diff.");
-	return { found: false, id, error: "Not implemented in placeholder" };
+	const { fixedVersion, fallback, logger } = options;
+	logger.info(
+		`searchLyrics: Processing ID: ${id}, fixed: ${fixedVersion}, fallback: ${fallback}`,
+	);
+	// 与 /api/search 路由同一条搜索链：仓库抓取 → 外部网易云回退（含缓存）
+	const provider = new LyricProvider(process.env.EXTERNAL_NCM_API_URL);
+	return provider.search(id, { fixedVersion, fallback });
 }
 
 // --- New Metadata Function ---
