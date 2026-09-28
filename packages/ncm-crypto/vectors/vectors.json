@@ -1,0 +1,266 @@
+[
+  {
+    "fn": "weapi",
+    "input": [
+      {
+        "id": 299115,
+        "br": 999000
+      }
+    ],
+    "output": {
+      "params": "T7XTRfk/WANsHJMUBZfQYPqzYZ9XoBFl2ifN3wjhi5Usom9mwG7qn0TeMNt9qeEE",
+      "encSecKey": "ac106870ab2b15100fe9cf09a3920baec58cc18a349e4b9768dd18dc9aba1825831e9d512e3f5734f34a37a05c450ab7a3a1ae41aef814af882b865341c0eb04b6129778a7b01b51f686dadc701e0fa7270c222564a7dfa21831a23755ce8019789d0e6a6ea0017c98615783834514890e98635895b847be89a52ce7b098e844"
+    },
+    "note": "Math.random stubbed -> deterministic secretKey"
+  },
+  {
+    "fn": "linuxapi",
+    "input": [
+      {
+        "method": "test",
+        "params": {
+          "a": 1
+        }
+      }
+    ],
+    "output": {
+      "eparams": "31C156CABFF920B66A1DFCD7F5305A390DB320EF68E0F82F95B1320FF935C39BE702478ED4773052C6F605ED77B5C32B"
+    }
+  },
+  {
+    "fn": "eapi",
+    "input": [
+      "/api/song/detail",
+      {
+        "ids": "[1,2,3]"
+      }
+    ],
+    "output": {
+      "params": "7D398AA5036D61F11B22021C618C242421D51F26B6A0246E121BFC7B69A3481FAFD65EC518028CEDB33FAF7ABB28949B298B3EF11E1411CED4E19FBA22746678C4FA1EAB5F81532EBA5F01DF4A499B942BCB9D6A7B1CD051C108986B22EBCF41"
+    }
+  },
+  {
+    "fn": "eapi",
+    "input": [
+      "/api/raw",
+      "plainstring"
+    ],
+    "output": {
+      "params": "727600DD5601FB82FE178D5705B9E490AFAFB79256841CA57BEB3D624279F70008C98E2622053D9FEE75CBCC26CE340B3AAEB02D046304C9C69E6C0A4900752EDB73DF5B985A48C221DCC7611C596AE2"
+    }
+  },
+  {
+    "fn": "decrypt",
+    "input": [
+      "24866B89213A5532A8F38256544EF38CA8A37BC22E73BCE8C40DEF16F8534D04ED5E5A3E15C5E2AF4AC5E0A501CB451621C0DC0A2631200C92D889659A6E55FBA6BFC26BF711B51D778CEA00E767F2A1"
+    ],
+    "output": "",
+    "note": "NONDETERMINISTIC in original (random KDF salt): usually \"\" / sometimes throws Malformed UTF-8 data; test asserts behavior class only"
+  },
+  {
+    "fn": "aesEncrypt",
+    "input": [
+      "hello world",
+      "cbc",
+      "1234567890123456",
+      "0102030405060708"
+    ],
+    "output": "5KnQWnOORN0IixfiYgwlag=="
+  },
+  {
+    "fn": "aesEncrypt",
+    "input": [
+      "hello",
+      "ecb",
+      "e82ckenh8dichen8",
+      "",
+      "hex"
+    ],
+    "output": "3329CABA8FB561FF0086A5823D14F529",
+    "note": "hex uppercase output"
+  },
+  {
+    "fn": "aesDecrypt",
+    "input": [
+      "yPzBXqDVRkHzduZTvIgsOg==",
+      "cbc",
+      "1234567890123456",
+      "0102030405060708"
+    ],
+    "output": "roundtrip-cbc",
+    "note": "output decoded as utf8"
+  },
+  {
+    "fn": "aesDecrypt",
+    "input": [
+      "D79195E42963DCA95D1BE06F16272144",
+      "ecb",
+      "e82ckenh8dichen8",
+      "",
+      "hex"
+    ],
+    "output": "roundtrip-ecb",
+    "note": "hex input, output decoded as utf8"
+  },
+  {
+    "fn": "eapiResDecrypt",
+    "input": [
+      "2cb98c1cf1635abd26376cef59e2fbe10a91c39004a692d2f82b6e4a3fea70822f9b3d86f0fa069b66d429b52168a2e2"
+    ],
+    "output": {
+      "code": 200,
+      "msg": "ok",
+      "list": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "fn": "eapiResDecrypt",
+    "input": [
+      "ce31fb563b323757babec700dbc62dbe4ca0c588624a4de92aee6576cab0e68aa09c27f2cdc4264872a922f778871b28a710952b8453800a4bfdb6a3ae0c5a94",
+      true
+    ],
+    "output": {
+      "code": 200,
+      "data": {
+        "songs": [
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "note": "aeapi gunzip branch"
+  },
+  {
+    "fn": "eapiReqDecrypt",
+    "input": [
+      "7D398AA5036D61F11B22021C618C242421D51F26B6A0246E121BFC7B69A3481FD79A81A6874ED6A036E610D23F9BDCC6E7602DDBC2A54F7DB2890F4845580541652D3EBE5C5EE973B2783FBCB81FC906FDE1760245005671E212DDD8F840DC09"
+    ],
+    "output": {
+      "url": "/api/song/detail",
+      "data": {
+        "ids": "[9]"
+      }
+    }
+  },
+  {
+    "fn": "xeapiSign",
+    "input": [
+      1700000000000,
+      "nonce-abc-123"
+    ],
+    "output": "bJWrSAZgG0nktaPti/mcwXaNceGMRfrOQQndalG1vis="
+  },
+  {
+    "fn": "xeapi",
+    "input": [
+      "/api/song/url/v1",
+      {
+        "id": "123",
+        "br": "999000"
+      },
+      {
+        "publicKeyState": {
+          "publicKey": "69nJ1gfIGi4+dMMCkWE+e83QvNCtz0Xa7RX0vVSWnTQ=",
+          "sk": "test-sk",
+          "version": "3.1.0"
+        },
+        "os": "android"
+      }
+    ],
+    "output": {
+      "B": "ESg8mf8b/lTqGB4rd1HOvQmQqrPRTE8gXbn8rQTV14ELddA1sfaCMX2ZS1npwgiY7MQXooTRuW4VEP90KHfa8Squx8mCpfzzruwau8SabjyMGA9dTAyAfmPAhpXqrkqsyizHN2kedHbDpjIVxrvbIw==",
+      "S": "NvQpFC8U/eg9eUwy9U2zbsVgvHjxdBYtO3PTGqVfKlgA3wubgS4n/3KVETp48x4hS8YciR7Evzbme0nrbmHfNnKWYmYfprFcNz55Ipu93WUB3mCZtTDaEzXGx/SrgH/bP9bEtQ==",
+      "R": "yNuOUshvmSZmYmoxpnRO5g=="
+    },
+    "note": "dynamicKey+iv+ephemeral stubbed"
+  },
+  {
+    "fn": "xeapi",
+    "input": [
+      "/api/x",
+      {
+        "a": "1"
+      },
+      {
+        "publicKeyState": {
+          "publicKey": "69nJ1gfIGi4+dMMCkWE+e83QvNCtz0Xa7RX0vVSWnTQ=",
+          "sk": "test-sk",
+          "version": "3.1.0"
+        },
+        "os": "ios",
+        "sessionKey": "fixedsessionkey!",
+        "sessionId": "sid-1"
+      }
+    ],
+    "output": {
+      "B": "fQVR2vPo6NIICUIsdXiB1559TBKFoo7dJivrW9+sL17LwE+8aqLGiNwQ+W3fjHfkEMGnySSsaUsaPlcUW2YyBbQ6arVnjm351IDAPO9UNJqVuT8PxJrRNqTjnAiJhSYU",
+      "S": "NvQpFC8U/eg9eUwy9U2zbsVgvHjxdBYtO3PTGqVfKlh3E5x3I105k4M+GFOMYXvRBskmL2kxELGFS65CO5ahgD47FAZps41cIyfqCtW98AmxYwCBpUYcqom2dWICp4Uu",
+      "R": "2M3wLTHlF9jpAFo5tis0BQ=="
+    },
+    "note": "session branch; R embeds sessionId; 16-byte sessionKey"
+  },
+  {
+    "fn": "xeapi",
+    "input": [
+      "/api/q?x=1&y=2",
+      {
+        "a": "1",
+        "e_r": "drop-me"
+      },
+      {
+        "publicKeyState": {
+          "publicKey": "69nJ1gfIGi4+dMMCkWE+e83QvNCtz0Xa7RX0vVSWnTQ=",
+          "sk": "test-sk",
+          "version": "3.1.0"
+        },
+        "os": "android",
+        "method": "GET",
+        "contentType": "application/json"
+      }
+    ],
+    "output": {
+      "B": "ESg8mf8b/lTqGB4rd1HOvWvDYS47aCgOHQmEqXFpKrJbh/UXAM7Kx/rLftSa4uz+D0MW3Xt/y9tF5xcUuC+XZB7Nmvk6o0k8R80Ho+NA/KlPZAU9ZroSiS9RdRD/sTgJysU15LpGkC4UWNpBXqBUVxUYXTNanv9tHzff5mHsJhJAAwtrsAy9DEOrXvL0P6JTDk0yvz+ymJkvCdWMAClnYBmDHcJwNnLTEKKhP+rTucQ=",
+      "S": "NvQpFC8U/eg9eUwy9U2zbsVgvHjxdBYtO3PTGqVfKlgA3wubgS4n/3KVETp48x4hS8YciR7Evzbme0nrbmHfNnKWYmYfprFcNz55Ipu93WUB3mCZtTDaEzXGx/SrgH/bP9bEtQ==",
+      "R": "yNuOUshvmSZmYmoxpnRO5g=="
+    },
+    "note": "queryString/method/contentType/e_r branches"
+  },
+  {
+    "fn": "xeapiResDecrypt",
+    "input": [
+      "LSdWxOrfV4AzEZzgi4fVqhryX6cOXALjZv3Tkvon1gw=",
+      "base64"
+    ],
+    "output": {
+      "code": 200,
+      "lyric": "lrc"
+    },
+    "note": "input annotated base64; plain branch"
+  },
+  {
+    "fn": "xeapiResDecrypt",
+    "input": [
+      "zjH7VjsyN1e6vscA28YtvlRclsTKpqoIVSUHEgqK2ZhBqAGVq2UkJL3/0PBD0pMJ",
+      "base64"
+    ],
+    "output": {
+      "code": 200,
+      "zip": true
+    },
+    "note": "1f8b magic -> gunzip branch"
+  },
+  {
+    "fn": "xeapiDecryptPublicKey",
+    "input": [
+      "NGB7YHCTdrSekokED6x31+pKRjHuqjgTrw9hCbskCu7lf2/zrL3bfEIFqzQkIEeWps74mRFkVd/MrSynUf55mSzQNj6Hf2jbg/vrgwHFeh0="
+    ],
+    "output": {
+      "publicKey": "69nJ1gfIGi4+dMMCkWE+e83QvNCtz0Xa7RX0vVSWnTQ=",
+      "version": "3.1.0"
+    }
+  }
+]
