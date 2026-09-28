@@ -343,6 +343,12 @@ export const createRequest = async (
 	}
 
 	// fetch settings
+	// parity: axios 发送 string body 时不带 Content-Type(上游按表单解析);
+	// undici fetch 会默认补 text/plain;charset=UTF-8,导致上游返回空 body。
+	// 显式声明表单类型,上游实测返回正常数据。xeapi 分支自带 content-type,不覆盖。
+	if (!Object.keys(headers).some((k) => k.toLowerCase() === "content-type")) {
+		headers["Content-Type"] = "application/x-www-form-urlencoded";
+	}
 	const fetchInit: RequestInit & { dispatcher?: unknown } = {
 		method: "POST",
 		headers,
