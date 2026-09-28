@@ -1,1 +1,1 @@
-{"compilerOptions":{"outDir":"dist","rootDir":"src"},"extends":"../../tsconfig.base.json","include":["src"]}
+{"compilerOptions":{"outDir":"dist","rootDir":"src","typeRoots":["../../node_modules/.pnpm/node_modules/@types","./node_modules/@types"]},"extends":"../../tsconfig.base.json","include":["src"]}

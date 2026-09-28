@@ -1,9 +1,15 @@
-import { Hono } from 'hono'
+/**
+ * Dev entry (`pnpm dev` -> `tsx watch src/index.ts`).
+ * Production entry is also available as `node dist/index.js`.
+ */
+import { start } from "./main.js";
 
-// v2 rewrite: Hono gateway (replaces Go/Gin).
-// Port scope: routes, auth, rate-limit, platform proxy, health, config API.
-export const app = new Hono()
+try {
+	start();
+} catch (err) {
+	console.error("启动失败:", err);
+	process.exit(1);
+}
 
-app.get('/health', (c) => c.json({ status: 'ok', service: 'gateway' }))
-
-export default app
+export { createApp, isSecurityEnabled } from "./app.js";
+export { loadConfig, platformUpstream } from "./config.js";

@@ -1,1 +1,21 @@
-{"dependencies":{"hono":"^4.7.0","zod":"^3.24.0"},"devDependencies":{"typescript":"^5.8.0","vitest":"^3.2.0"},"name":"@music-api/meting","private":true,"scripts":{"build":"tsc -p tsconfig.json","dev":"tsx watch src/index.ts","lint":"biome check src","test":"vitest run"},"type":"module","version":"2.0.0"}
+{
+  "dependencies": {
+    "hono": "^4.7.0",
+    "zod": "^3.24.0",
+    "@hono/node-server": "^1.13.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  },
+  "name": "@music-api/meting",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "lint": "biome check src",
+    "test": "vitest run"
+  },
+  "type": "module",
+  "version": "2.0.0"
+}
