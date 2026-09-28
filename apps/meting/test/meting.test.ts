@@ -14,6 +14,13 @@ import { format } from "../src/util.js";
 const app = createApp();
 
 /**
+ * 测试用桩上游地址：fetch 已被 stub，不产生真实网络请求，
+ * 但 provider 需要非空 base 才会走到 fetch 调用。
+ */
+process.env.SPOTIFY_API ??= "http://stub.test/";
+process.env.YT_API ??= "http://stub.test/";
+
+/**
  * Branch tests inject a fake provider whose support_type covers url/pic/lrc.
  * (With the real registry those types 400 for spotify/ytmusic — identical to
  * the original, where the branches were only reachable via the dropped

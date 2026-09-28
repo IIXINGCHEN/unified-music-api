@@ -48,7 +48,16 @@ export function createApiHandler(
 			});
 		}
 
-		const data: unknown = await provider.handle(type, id);
+		const data: unknown = await provider.handle(type, id).catch((err: unknown) => {
+			const message = err instanceof Error ? err.message : String(err);
+			c.status(503);
+			return c.json({
+				status: 503,
+				message,
+				param: { server, type, id },
+			});
+		});
+		if (data instanceof Response) return data;
 
 		if (type === "url") {
 			const url = data as string;
