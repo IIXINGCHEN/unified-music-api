@@ -16,7 +16,9 @@ import uploadPlugin from "../plugins/songUpload.js";
 // biome-ignore lint/suspicious/noExplicitAny: upstream JSON is untyped
 let mm: any;
 export default defineModule(async (query: NcmQuery, request: NcmRequestFn) => {
-	mm = await import("music-metadata").then((m) => m.default ?? m);
+	mm = await import("music-metadata").then(
+		(m) => (m as unknown as Record<string, unknown>).default ?? m,
+	);
 
 	query.songFile.name = Buffer.from(query.songFile.name, "latin1").toString(
 		"utf-8",

@@ -13,7 +13,10 @@
   "devDependencies": {
     "typescript": "^5.8.0",
     "vitest": "^3.2.0",
-    "@types/node": "^22.15.3"
+    "@types/node": "^22.15.3",
+    "@types/qrcode": "^1.5.5",
+    "@types/jsdom": "^21.1.7",
+    "crypto-js": "^4.2.0"
   },
   "name": "@music-api/netease",
   "private": true,
@@ -21,7 +24,8 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/index.ts",
     "lint": "biome check src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "contract": "node scripts/contract-check.mjs"
   },
   "type": "module",
   "version": "2.0.0"

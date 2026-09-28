@@ -15,16 +15,17 @@ export interface KgResponse {
 
 export type KgEncryptType = "android" | "web" | "register";
 
-/** createRequest 请求配置（字段与原 options 一致） */
+/** createRequest 请求配置（字段与原 options 一致；method/encryptType 保持原版的动态字符串语义） */
 export interface KgRequestOptions {
-	method: "get" | "GET" | "post" | "POST";
+	method: string;
 	url: string;
 	baseURL?: string;
 	params?: Record<string, unknown>;
 	data?: unknown;
 	headers?: Record<string, string | number>;
-	encryptType?: KgEncryptType;
-	cookie: Record<string, unknown>;
+	encryptType?: string;
+	/** 原版 request.js 中 `options?.cookie ?? {}`：模块可省略 */
+	cookie?: Record<string, unknown>;
 	encryptKey?: boolean;
 	clearDefaultParams?: boolean;
 	clearDefaultHeaders?: boolean;
@@ -49,7 +50,8 @@ export interface KgCloudRequestOptions {
  * Object.assign 合并语义一致），保留字段显式声明，不逐个推导业务类型。
  */
 export type KgQuery = Record<string, unknown> & {
-	cookie: Record<string, unknown>;
+	/** 模块间直接调用时可省略（原版同样允许无 cookie 调用） */
+	cookie?: Record<string, unknown>;
 	encryptType?: KgEncryptType;
 	encryptKey?: boolean;
 	clearDefaultParams?: boolean;

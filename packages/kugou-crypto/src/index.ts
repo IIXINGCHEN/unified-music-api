@@ -14,7 +14,20 @@ export {
 	randomNumber,
 	randomString,
 } from "./codec.js";
-export { appid, clientver, liteAppid, liteClientver } from "./config.js";
+export {
+  appid,
+  clientver,
+  liteAppid,
+  liteClientver,
+  apiver,
+  srcappid,
+  wx_appid,
+  wx_lite_appid,
+  wx_secret,
+  wx_lite_secret,
+  qq_appid,
+  qq_lite_appid,
+} from "./config.js";
 export type { AesEncryptOptions, PlaylistCipher } from "./crypto.js";
 export {
 	cryptoAesDecrypt,

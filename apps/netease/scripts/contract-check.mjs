@@ -10,22 +10,37 @@
  *
  * 确定性措施：
  *   - 每次调用前用 mulberry32 重置 Math.random 种子（deviceId/IP 生成一致）
- *   - crypto-js 用 /tmp/contract-harness/stubs 下的最小 stub（MD5/Utf8/Base64，
- *     已验证与 node:crypto 字节一致），通过 NODE_PATH 注入
+ *   - crypto-js 用真实 crypto-js@4.2.0（devDependency，与原仓库同版本），
+ *     脚本启动时自动注入 NODE_PATH，无需外部环境变量
  *   - query 每次深拷贝，互不污染
  *
  * 排除名单见 SKIP（真实网络 / 缺失可选依赖 / 已知有意分歧 / 3 个例外另有 vitest）。
  * 通过率门禁：pass / (pass + migration-fail) >= 95%。
  *
  * 用法：
- *   NODE_PATH=/tmp/contract-harness/stubs/node_modules node scripts/contract-check.mjs [--only a,b,c] [--json]
+ *   node scripts/contract-check.mjs [--only a,b,c] [--json]
+ *   pnpm contract
  */
 import { readdirSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(SCRIPT_DIR, "..");
+
+// 自包含 NODE_PATH：旧 CJS 模块 require('crypto-js') 时能解析到本包的 devDependency。
+// （旧模块位于审计仓库路径，Node 向上查找 node_modules 找不到，必须显式注入。）
+const HARNESS_NM = path.join(APP_DIR, "node_modules");
+{
+	const delimiter = path.delimiter;
+	const entries = (process.env.NODE_PATH || "").split(delimiter).filter(Boolean);
+	if (!entries.includes(HARNESS_NM)) {
+		process.env.NODE_PATH = [HARNESS_NM, ...entries].join(delimiter);
+		const { Module } = createRequire(import.meta.url)("node:module");
+		Module._initPaths();
+	}
+}
 const OLD_DIR = "/home/hatch/workspace/music-api-audit/repos/api-enhanced/module";
 const NEW_DIR = path.join(APP_DIR, "dist/modules");
 

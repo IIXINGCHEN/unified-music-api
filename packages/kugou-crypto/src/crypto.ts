@@ -64,6 +64,11 @@ export interface AesEncryptOptions {
  * - 否则：tempKey = opt.key || 随机16位小写；key = md5(tempKey)[0:32]；iv = key 末 16 位
  * - 返回：opt.key 非空 -> hex 字符串；否则 { str: hex, key: tempKey }
  */
+export function cryptoAesEncrypt(data: unknown): { str: string; key: string };
+export function cryptoAesEncrypt(
+	data: unknown,
+	opt?: AesEncryptOptions,
+): string | { str: string; key: string };
 export function cryptoAesEncrypt(
 	data: unknown,
 	opt?: AesEncryptOptions,

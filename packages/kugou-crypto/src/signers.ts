@@ -99,8 +99,8 @@ export const signKey = (
 	return cryptoMd5(`${hash}${str}${appid || useAppid}${mid}${userid || 0}`);
 };
 
-/** 云盘密钥签名：MD5("musicclound" + hash + pid + 盐) */
-export const signCloudKey = (hash: string, pid: string): string => {
+/** 云盘密钥签名：MD5("musicclound" + hash + pid + 盐)；pid 模板字符串拼接，number 与 string 等价 */
+export const signCloudKey = (hash: string, pid: string | number): string => {
 	return cryptoMd5(`musicclound${hash}${pid}${CLOUDKEY_SALT}`);
 };
 
