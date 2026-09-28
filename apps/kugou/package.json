@@ -1,1 +1,25 @@
-{"dependencies":{"@music-api/http-kit":"workspace:*","@music-api/kugou-core":"workspace:*","@music-api/kugou-crypto":"workspace:*","hono":"^4.7.0","zod":"^3.24.0"},"devDependencies":{"typescript":"^5.8.0","vitest":"^3.2.0"},"name":"@music-api/kugou","private":true,"scripts":{"build":"tsc -p tsconfig.json","dev":"tsx watch src/index.ts","lint":"biome check src","test":"vitest run"},"type":"module","version":"2.0.0"}
+{
+  "dependencies": {
+    "@music-api/http-kit": "workspace:*",
+    "@music-api/kugou-core": "workspace:*",
+    "@music-api/kugou-crypto": "workspace:*",
+    "hono": "^4.7.0",
+    "zod": "^3.24.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0",
+    "@types/node": "^22.15.3"
+  },
+  "name": "@music-api/kugou",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "lint": "biome check src",
+    "test": "vitest run"
+  },
+  "type": "module",
+  "version": "2.0.0"
+}

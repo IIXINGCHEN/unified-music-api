@@ -16,7 +16,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@music-api/ncm-crypto": "workspace:*"
+    "@music-api/ncm-crypto": "workspace:*",
+    "undici": "^7.0.0"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

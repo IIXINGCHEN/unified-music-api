@@ -1,0 +1,18 @@
+// 编辑歌单顺序
+import {
+	createOption,
+	defineModule,
+	type NcmQuery,
+	type NcmRequestFn,
+} from "@music-api/ncm-core";
+
+export default defineModule((query: NcmQuery, request: NcmRequestFn) => {
+	const data = {
+		ids: query.ids,
+	};
+	return request(
+		`/api/playlist/order/update`,
+		data,
+		createOption(query, "weapi"),
+	);
+});

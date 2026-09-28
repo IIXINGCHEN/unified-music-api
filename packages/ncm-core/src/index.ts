@@ -5,10 +5,12 @@
 
 export {
 	API_DOMAIN,
-	CLIENTLOG_DOMAIN3,
+	APP_CONF,
 	chooseUserAgent,
+	CLIENTLOG_DOMAIN3,
 	DOMAIN,
 	EAPI_DOMAIN,
+	resourceTypeMap,
 	SPECIAL_STATUS_CODES,
 	XEAPI_DOMAIN,
 } from "./config.js";
