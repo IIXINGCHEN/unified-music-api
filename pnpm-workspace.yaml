@@ -1,4 +1,6 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "website"
+  # website（VitePress 文档站）独立管理，不纳入主 workspace：
+  # 其 vite 5.x 有高危漏洞（GHSA-fx2h-pf6j-xcff，dev server 专用），
+  # 而文档站仅做静态构建、不跑 dev server，移出以避免 audit 误伤主流程。
