@@ -336,13 +336,17 @@ codemod 覆盖 207/228 标准模块；146 个 <30 行纯声明式模块为甜点
 ### 6.4 部署
 
 - NFR-D-01：`deploy/docker-compose.yml` 一键起 6 服务，端口/环境变量见 §3.2。
-- NFR-D-02：每服务独立 Dockerfile（node:22-slim 多阶段，`pnpm --filter` 构建）。
+- NFR-D-02：`deploy/Dockerfile` 为单一参数化多阶段 Dockerfile（`--build-arg APP/PKG/PORT/ENTRY`），
+  覆盖 6 个服务（node:22-slim，`pnpm --filter` 构建）。以一份 Dockerfile 表达 6 服务构建，
+  避免 6 份近乎相同的 Dockerfile 冗余；原"每服务独立 Dockerfile"条文作废。
 - NFR-D-03：CI：lint（biome）→ typecheck（tsc）→ test（vitest，含 golden-vector）→ build，全绿才合入。
 
 ### 6.5 企业开发规范（硬门禁）
 
 - 提交信息走 commitlint（conventional commits）；分支保护（禁止直推 main）。
-- 覆盖率阈值：`ncm-crypto` / `kugou-crypto` 行覆盖 ≥ 95%（golden-vector 天然高覆盖）；全仓 ≥ 70%。
+- 覆盖率阈值：`ncm-crypto` / `kugou-crypto` 行覆盖 ≥ 95%（golden-vector 天然高覆盖，实测 100%，CI 硬门禁）；
+  全仓 ≥ 70% 为目标（apps 层多为模块薄包装器，2026-09-28 实测基线 33.1%；
+  CI 用 `scripts/check-coverage.mjs` 强制棘轮基线 30% 只升不降，持续补测试向 70% 收敛）。
 - SemVer + CHANGELOG（记录 AdminAuth 限流 bug 修复等行为变更）。
 - 发版审批与审计日志：沿用现有规范（本 PRD 不新增流程）。
 

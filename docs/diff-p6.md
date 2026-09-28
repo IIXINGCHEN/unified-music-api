@@ -140,4 +140,7 @@
 - **API 功能 parity**: 24/27 可测项通过 (88.9%)。3 个失败均为 404 框架 cosmetic 差异,不影响 API 功能。
 - **阻断性 bug**: 无。P6-1 已修复,P6-2 证实为上游间歇行为。
 - **环境限制**: 网关 (Go) 因沙箱无工具链未测;酷狗上游在沙箱中不稳定,但双方错误状态码一致。
-- **范围偏差**: `packages/ncm-core/src/request.ts` 的 Content-Type 修复超出 "只改 apps/**",需父代理确认。
+- **范围偏差**: ~~`packages/ncm-core/src/request.ts` 的 Content-Type 修复超出 "只改 apps/**",需父代理确认。~~
+  ✅ **2026-09-28 决策：保留，无需再确认**。Content-Type 兜底是协议正确性必需修复
+  （undici 字符串 body 无默认 Content-Type，网易云上游按表单解析，差分测试证实会产生空 body），
+  且对 440 模块全部生效，属于请求核心职责，放在 `ncm-core` 是正确分层。正式归入"协议一致性修复"，不再列为待决项。

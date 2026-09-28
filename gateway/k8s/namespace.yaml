@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: unm-server
-  labels:
-    name: unm-server
-    app: unm-server
-    version: v1.0.4

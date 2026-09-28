@@ -1,0 +1,31 @@
+# gitleaks 配置：误报白名单。
+# 本仓库迁移自多个开源音乐 API 项目，以下均为原项目公开的客户端常量
+# （非私有密钥），删除会破坏功能，故加入白名单：
+# - 网易云 weapi/eapi 公开 key（NeteaseCloudMusicApi 文档公开）
+# - 酷狗 signer / 设备指纹公开常量（KuGouMusicApi 源码公开）
+# - packages/*/vectors/：加密 golden-vector 测试向量（dummy 数据）
+# - 测试文件中的 dummy key（test-api-key-12345 等）
+[allowlist]
+description = "公开客户端常量与测试数据（非密钥）"
+paths = [
+  '''packages/.*/vectors/.*''',
+  '''apps/gateway/test/.*''',
+  '''apps/kugou/scripts/contract-check\.mjs''',
+]
+regexes = [
+  '''0CoJUm6Qyw8W8jud''',                    # NCM weapi 公开 key
+  '''9ca17ae2e6ffcda170e2e6ee8af14fbabdb988f225b3868eb2c15a879b9a''', # NCM eapi 公开 key
+  '''mUHCwVNWJbunMqAHf5MImuirT6plvs6VSFW62MGHstFQxhBGdEoIhLItH3dj''', # NCM linuxapi 公开 key
+  '''fd14b35e3f81af3817a20ae7adae7020''',    # 酷狗公开 appid 常量
+  '''LnT6xpN3khm36zse0QzvmgTZ3waWdRSA''',    # 酷狗公开设备常量
+  '''OIlwieks28dk2k092lksi2UIkp''',         # 酷狗公开 signer 常量
+  '''90b8382a1bb4ccdcf063102053fd75b8''',   # 酷狗 login_token 公开常量
+  '''c24f74ca2820225badc01946dba4fdf7''',   # 酷狗 login_token 公开常量
+  '''57ae12eb6890223e355ccfcb74edf70d''',   # 酷狗 signer 公开常量
+  '''185672dd44712f60bb1736df5a377e82''',   # 酷狗 signer 公开常量
+  '''ebd1ac3134c880bda6a2194537843caa0162e2e7''', # 酷狗 signer 公开常量
+  '''test-api-key-12345''',                  # 测试 dummy
+  '''contractqrkey123''',                    # 契约测试 dummy
+  '''mytempkey1234567''',                    # 向量 dummy
+  '''pvk4jysjp0l77cri''',                    # 向量 dummy
+]

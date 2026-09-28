@@ -1,20 +1,30 @@
 # unified-music-api
 
-统一音乐 API：把名下 9 个音乐 API 仓库审计、去重、整合为**一个仓库**。
+统一音乐 API：9 个音乐 API 仓库审计、去重、整合，并以 **TypeScript + Hono** 全面重构为单体 monorepo。
 
-- **网关**（Go + Gin，沿用 `music-api-proxy`）：统一入口、鉴权、限流、监控、聚合
-- **平台微服务**（原样迁入，零业务改写）：
-  - `services/netease` — 网易云音乐全接口（440，`api-enhanced`）
-  - `services/kugou` — 酷狗音乐全接口（228，`KuGouMusicApi`）
-  - `services/unm` — 解灰 / 多源匹配（`unm-music-api`，Hono+TS）
-  - `services/lyric` — TTML 逐字歌词（`Lyric-Atlas-API`，Hono，新增独立运行入口）
-  - `services/meting` — Meting 精简版（**仅** `spotify` / `ytmusic` 两个独有 provider）
-- **已退役**（功能被超集覆盖）：`neteasecloudmusicapienhanced-api-enhanced`、
+- **网关**（`apps/gateway`，Hono）：统一入口、鉴权、限流、平台聚合反代、健康检查
+- **平台服务**（Hono，行为与原版一致）：
+  - `apps/netease` — 网易云音乐全接口（440）
+  - `apps/kugou` — 酷狗音乐全接口（226）
+  - `apps/unm` — 解灰 / 多源匹配
+  - `apps/lyric` — TTML 逐字歌词转换链
+  - `apps/meting` — Meting（**仅** `spotify` / `ytmusic` 两个独有 provider）
+- **共享包**（`packages/`）：`ncm-crypto`、`ncm-core`、`kugou-crypto`、`kugou-core`、`http-kit`、`contracts`
+- **已退役**（功能被超集覆盖，待归档删除）：`neteasecloudmusicapienhanced-api-enhanced`、
   `meting-api-1.5.11`、`meting-api-p`
 
-完整审计报告：`../music-api-audit/AUDIT.md`（审计期快照）
+技术栈：TypeScript 5.8（strict）· Hono 4 · Node.js 22 LTS · pnpm 10 + Turborepo ·
+Zod + `@hono/zod-openapi` · Scalar · Vitest · Biome
 
 ## 快速开始
+
+```bash
+pnpm install
+pnpm build
+pnpm dev          # 或按服务单独启动
+```
+
+容器一键编排：
 
 ```bash
 cd deploy
@@ -29,7 +39,7 @@ GET/POST /api/v1/platform/{name}/{path}?query...
 ```
 
 `{name}` 取值：`netease` `kugou` `unm` `lyric` `meting`。
-路径与 query 原样透传给对应平台微服务，平台原生接口 100% 兼容。
+路径与 query 原样透传给对应平台服务，平台原生接口 100% 兼容。
 
 示例：
 
@@ -41,8 +51,7 @@ GET/POST /api/v1/platform/{name}/{path}?query...
 | `/api/v1/platform/lyric/api/search?id=123` | `lyric:3004/api/search?id=123` |
 | `/api/v1/platform/meting/api?server=spotify&type=playlist&id=xxx` | `meting:3005/api?server=spotify…` |
 
-网关原有的聚合接口（`/api/v1/search`、`/api/v1/lyric`、`/api/v1/match`…）保持不变。
-
+网关原生聚合接口（`/api/v1/search`、`/api/v1/lyric`、`/api/v1/match`…）保持可用。
 未知平台返回 404，上游不可用返回 502（均带 `platform` 字段）。
 
 ## 服务端口（compose 内）
@@ -62,36 +71,41 @@ GET/POST /api/v1/platform/{name}/{path}?query...
 
 ## API 文档
 
-- OpenAPI 3.1：[`contracts/openapi.yaml`](contracts/openapi.yaml)
-- Scalar 文档页：[`docs/api.html`](docs/api.html)
+- 各服务 `/docs`（Scalar，运行时生成）
+- 文档枢纽：[`docs/api.html`](docs/api.html)
+- 需求基线：[`docs/PRD.md`](docs/PRD.md) · 兼容性对照：[`docs/parity.md`](docs/parity.md)
 
 ## 开发
 
 ```bash
-# 网关构建门禁（需 Go 1.24+）
-cd gateway && go build ./... && go vet ./...
-
-# 仓库断言（29 项：结构 / 功能完整性 / 去重 / 契约）
-bash scripts/assert.sh
+pnpm install          # 安装依赖（CI 用 --frozen-lockfile）
+pnpm build            # 构建全部 12 个包
+pnpm lint             # Biome 检查
+pnpm test             # Vitest 全量测试
+bash scripts/assert.sh  # 73 项仓库断言门禁（结构 / 功能完整性 / 去重 / 契约）
 ```
 
 ## 仓库结构
 
 ```
 unified-music-api/
-├── gateway/            # Go 网关（music-api-proxy 迁入 + platform 聚合控制器）
-├── services/
-│   ├── netease/        # 网易云 440 接口（Node 22）
-│   ├── kugou/          # 酷狗 228 接口（Node 22）
-│   ├── unm/            # 解灰服务（Node 22，需构建）
-│   ├── lyric/          # 歌词服务（Node 22，tsx 直跑）
-│   └── meting/         # Meting 精简版（Node 22）
-├── contracts/          # OpenAPI 3.1 统一契约
-├── docs/               # Scalar API 文档
-├── deploy/             # docker-compose.yml
-└── scripts/            # assert.sh 断言门禁
+├── apps/
+│   ├── gateway/    # Hono 网关（鉴权 / 限流 / 平台聚合反代 / 健康检查）
+│   ├── netease/    # 网易云 440 接口
+│   ├── kugou/      # 酷狗 226 路由
+│   ├── unm/        # 解灰 / 多源匹配
+│   ├── lyric/      # TTML 逐字歌词
+│   └── meting/     # Meting（spotify / ytmusic）
+├── packages/
+│   ├── ncm-crypto/ ncm-core/          # 网易云加密与请求核心
+│   ├── kugou-crypto/ kugou-core/      # 酷狗签名与请求核心
+│   ├── http-kit/                      # 共享：缓存 / 限流 / 日志 / 错误信封
+│   └── contracts/                     # OpenAPI 注册表与共享 schema
+├── deploy/         # docker-compose.yml + 参数化 Dockerfile
+├── docs/           # PRD / parity / 差分报告 / Scalar 文档枢纽
+└── scripts/        # assert.sh 断言门禁
 ```
 
 ## 许可
 
-MIT。各 `services/` 子目录保留其原始 LICENSE 与版权声明。
+MIT。

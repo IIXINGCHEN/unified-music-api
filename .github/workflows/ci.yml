@@ -1,6 +1,7 @@
 # unified-music-api v2 CI（TypeScript/Hono monorepo）
 # 冻结栈：Node 22 LTS / pnpm 10 / Turborepo。
 # 门禁顺序：install → build → lint → test → scripts/assert.sh（≥40 项断言）。
+# 企业硬门禁：pnpm audit（high+）/ gitleaks / 覆盖率（加密包 ≥95%，全仓棘轮 30% 只升不降）。
 # 任一失败即整条流水线失败（企业开发规范：硬门禁，不许先上线后补）。
 name: CI
 
@@ -27,6 +28,9 @@ jobs:
 
       - name: install
         run: pnpm install --frozen-lockfile
+
+      - name: audit (high 及以上漏洞即失败)
+        run: pnpm audit --audit-level=high
 
       - name: build
         run: pnpm build
@@ -60,3 +64,36 @@ jobs:
         run: pnpm --filter @music-api/netease exec vitest run test/server.test.ts
       - name: kugou contract 226/226
         run: pnpm --filter @music-api/kugou exec vitest run test/server.test.ts
+
+  security:
+    name: security (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks 需要完整历史才能扫描全部提交
+          fetch-depth: 0
+      - name: gitleaks (密钥泄露即失败)
+        uses: gitleaks/gitleaks-action@v2
+
+  coverage:
+    name: coverage (thresholds + ratchet)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: install
+        run: pnpm install --frozen-lockfile
+      - name: crypto packages ≥95% 行覆盖
+        # ncm-crypto / kugou-crypto：PRD §6.5 硬门禁（实测 100%）
+        run: >-
+          pnpm --filter @music-api/ncm-crypto --filter @music-api/kugou-crypto
+          exec vitest run --coverage --coverage.thresholds.lines=95
+      - name: 全仓棘轮（只升不降，基线 30%，目标 70%）
+        run: node scripts/check-coverage.mjs --ratchet 30
