@@ -1,9 +1,14 @@
-import { Hono } from "hono";
+/**
+ * Library entry — port of api-enhanced/main.js's server-related exports.
+ * (Per-module function exports from main.js are out of scope for the v2
+ * HTTP service; see docs/parity-p3-netease.md.)
+ */
 
-// v2 rewrite: Netease service (440 modules, ported from api-enhanced).
-// Modules live in src/modules/, auto-registered like the original server.js.
-export const app = new Hono();
-
-app.get("/health", (c) => c.json({ status: "ok", service: "netease" }));
-
-export default app;
+export { generateConfig } from "./generateConfig.js";
+export {
+	constructServer,
+	getModuleDefinitions,
+	type NcmApiOptions,
+	type NcmModuleDef,
+	serveNcmApi,
+} from "./server.js";

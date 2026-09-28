@@ -1,8 +1,16 @@
-import { Hono } from "hono";
+/**
+ * @music-api/kugou — library surface.
+ * The runnable entrypoint is src/main.ts (`startService()`); the Hono app is
+ * built by `constructServer()` in src/server.ts.
+ */
 
-// v2 rewrite: KuGou service (226 routes, ported from KuGouMusicApi).
-export const app = new Hono();
-
-app.get("/health", (c) => c.json({ status: "ok", service: "kugou" }));
-
-export default app;
+export type {
+	KugouServerExtension,
+	KugouVariables,
+	LoadedModuleDef,
+} from "./server.js";
+export {
+	constructServer,
+	getModuleDefinitions,
+	startService,
+} from "./server.js";
