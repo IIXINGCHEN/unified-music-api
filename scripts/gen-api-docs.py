@@ -123,14 +123,14 @@ def app_routes(app):
     files = []
     if os.path.isdir(rd):
         files += [os.path.join(rd, f) for f in os.listdir(rd) if f.endswith(".ts")]
-    for f in ["app.ts", "server.ts", "main.ts"]:
+    for f in ["app.ts", "server.ts", "main.ts", "index.ts"]:
         p = os.path.join(ad, f)
         if os.path.isfile(p):
             files.append(p)
     seen = set()
     for path in files:
         src = open(path, encoding="utf-8", errors="ignore").read()
-        for m in re.finditer(r"(?:app|musicRoute|infoRoute|monitorRoute|resourceRoute)\.(get|post)\(\s*\"([^\"]+)\"", src):
+        for m in re.finditer(r"(?:app|api|musicRoute|infoRoute|monitorRoute|resourceRoute)\.(get|post)\(\s*\"([^\"]+)\"", src):
             method, route = m.group(1).upper(), m.group(2)
             if route not in seen:
                 seen.add(route)
