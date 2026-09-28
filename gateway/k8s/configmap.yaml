@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unm-server-config
+  namespace: unm-server
+  labels:
+    app: unm-server
+data:
+  config.yaml: |
+    server:
+      port: 5678
+      host: "0.0.0.0"
+      allowed_domain: "*"
+      proxy_url: ""
+      enable_flac: true
+      read_timeout: 30s
+      write_timeout: 30s
+      idle_timeout: 60s
+
+    security:
+      jwt_secret: "${JWT_SECRET}"
+      api_key: "${API_KEY}"
+      cors_origins:
+        - "*"
+      tls_enabled: false
+
+    performance:
+      max_concurrent_requests: 1000
+      request_timeout: "30s"
+      rate_limit:
+        enabled: true
+        requests_per_minute: 100
+        burst: 10
+      connection_pool:
+        max_idle_conns: 100
+        max_idle_conns_per_host: 10
+        idle_conn_timeout: "90s"
+
+    monitoring:
+      log_level: "info"
+      metrics_enabled: true
+      tracing_enabled: false
+      health_check_interval: 30s
+      metrics_port: 9090
+      prometheus_path: "/metrics"
+
+    sources:
+      netease_cookie: "${NETEASE_COOKIE}"
+      qq_cookie: "${QQ_COOKIE}"
+      migu_cookie: "${MIGU_COOKIE}"
+      joox_cookie: "${JOOX_COOKIE}"
+      youtube_key: "${YOUTUBE_KEY}"
+      default_sources:
+        - "kugou"
+        - "qq"
+        - "migu"
+      test_sources:
+        - "kugou"
+      timeout: 30s
+      retry_count: 3
+
+    # Redis配置已移除 - 项目不再使用Redis，改用内存缓存
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: unm-server
+  labels:
+    app: nginx
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+
+        access_log /var/log/nginx/access.log main;
+
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/json
+            application/javascript
+            application/xml+rss
+            application/atom+xml
+            image/svg+xml;
+
+        upstream unm-server {
+            server unm-server-service:5678;
+            keepalive 32;
+        }
+
+        server {
+            listen 80;
+            server_name _;
+
+            location /health {
+                access_log off;
+                proxy_pass http://unm-server;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            location / {
+                proxy_pass http://unm-server;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_connect_timeout 30s;
+                proxy_send_timeout 30s;
+                proxy_read_timeout 30s;
+            }
+
+            location /metrics {
+                proxy_pass http://unm-server:9090;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+    }
+
+# Redis ConfigMap已移除 - 项目不再使用Redis

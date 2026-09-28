@@ -1,0 +1,85 @@
+# 测试环境配置
+app:
+  mode: "staging"
+  debug: false
+
+# 服务器配置
+server:
+  port: 5678
+  read_timeout: "30s"
+  write_timeout: "30s"
+  enable_cors: true
+
+# 日志配置
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  enable_caller: true
+  enable_stacktrace: false
+
+# 音源配置
+sources:
+  enabled_sources: ["gdstudio", "unm_server"]
+  test_sources: ["gdstudio", "unm_server"]
+  
+  timeout: "20s"
+  retry_count: 2
+
+  unm_server:
+    timeout: "20s"
+    retry_count: 2
+  
+  gdstudio:
+    timeout: "20s"
+    retry_count: 2
+
+  music_info_resolver:
+    cache_ttl: "1800s"  # 测试环境中等缓存时间
+
+# 缓存配置
+cache:
+  enabled: true
+  ttl: "30m"
+  max_size: "50MB"
+
+# 性能配置
+performance:
+  max_concurrent_requests: 500
+  request_timeout: "20s"
+  
+  rate_limit:
+    enabled: true
+    requests_per_minute: 200  # 测试环境较宽松的限流
+    burst: 20
+
+# 安全配置
+security:
+  enable_auth: false  # 测试环境暂时禁用认证
+
+# 监控配置
+monitoring:
+  enabled: true
+  
+  metrics:
+    enabled: true
+    port: 9090
+  
+  health_check:
+    enabled: true
+    interval: "20s"
+  
+  profiling:
+    enabled: true  # 测试环境启用性能分析
+
+# 插件配置
+plugins:
+  middleware:
+    - name: "cors"
+      enabled: true
+    - name: "logging"
+      enabled: true
+    - name: "recovery"
+      enabled: true
+    - name: "rate_limit"
+      enabled: true

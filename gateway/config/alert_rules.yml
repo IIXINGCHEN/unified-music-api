@@ -1,0 +1,161 @@
+# Prometheus告警规则
+groups:
+  - name: unm-server.rules
+    rules:
+      # 服务可用性告警
+      - alert: UNMServerDown
+        expr: up{job="unm-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: unm-server
+        annotations:
+          summary: "Music API Proxy实例宕机"
+          description: "Music API Proxy实例 {{ $labels.instance }} 已宕机超过1分钟"
+
+      # 高错误率告警
+      - alert: UNMServerHighErrorRate
+        expr: rate(http_requests_total{job="unm-server",status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "Music API Proxy高错误率"
+          description: "Music API Proxy实例 {{ $labels.instance }} 5xx错误率超过10%"
+
+      # 高响应时间告警
+      - alert: UNMServerHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="unm-server"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "Music API Proxy高延迟"
+          description: "Music API Proxy实例 {{ $labels.instance }} 95%响应时间超过1秒"
+
+      # 高内存使用告警
+      - alert: UNMServerHighMemoryUsage
+        expr: (process_resident_memory_bytes{job="unm-server"} / 1024 / 1024) > 400
+        for: 10m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "Music API Proxy高内存使用"
+          description: "Music API Proxy实例 {{ $labels.instance }} 内存使用超过400MB"
+
+      # 高CPU使用告警
+      - alert: UNMServerHighCPUUsage
+        expr: rate(process_cpu_seconds_total{job="unm-server"}[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "Music API Proxy高CPU使用"
+          description: "Music API Proxy实例 {{ $labels.instance }} CPU使用率超过80%"
+
+      # 连接数过高告警
+      - alert: UNMServerHighConnections
+        expr: http_connections_active{job="unm-server"} > 800
+        for: 5m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "Music API Proxy连接数过高"
+          description: "Music API Proxy实例 {{ $labels.instance }} 活跃连接数超过800"
+
+  - name: kubernetes.rules
+    rules:
+      # Pod重启频繁告警
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Pod频繁重启"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} 在过去15分钟内重启了 {{ $value }} 次"
+
+      # Pod内存使用过高
+      - alert: PodHighMemoryUsage
+        expr: (container_memory_usage_bytes{container!="POD",container!=""} / container_spec_memory_limit_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Pod内存使用过高"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} 内存使用率超过90%"
+
+      # Pod CPU使用过高
+      - alert: PodHighCPUUsage
+        expr: (rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m]) / container_spec_cpu_quota * container_spec_cpu_period) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Pod CPU使用过高"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} CPU使用率超过90%"
+
+      # 节点磁盘空间不足
+      - alert: NodeDiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          service: kubernetes
+        annotations:
+          summary: "节点磁盘空间不足"
+          description: "节点 {{ $labels.instance }} 根分区可用空间少于10%"
+
+      # 节点内存使用过高
+      - alert: NodeHighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "节点内存使用过高"
+          description: "节点 {{ $labels.instance }} 内存使用率超过90%"
+
+  - name: application.rules
+    rules:
+      # 音源服务异常
+      - alert: MusicSourceError
+        expr: increase(music_source_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "音源服务异常"
+          description: "音源 {{ $labels.source }} 在过去5分钟内出现了 {{ $value }} 次错误"
+
+      # 缓存命中率过低
+      - alert: LowCacheHitRate
+        expr: (cache_hits_total / (cache_hits_total + cache_misses_total)) * 100 < 50
+        for: 10m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "缓存命中率过低"
+          description: "缓存命中率为 {{ $value }}%，低于50%"
+
+      # 限流触发过多
+      - alert: HighRateLimitHits
+        expr: increase(rate_limit_hits_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: unm-server
+        annotations:
+          summary: "限流触发过多"
+          description: "过去5分钟内触发限流 {{ $value }} 次"

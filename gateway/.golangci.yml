@@ -1,0 +1,303 @@
+# golangci-lint 配置文件 - 生产环境代码质量标准
+run:
+  timeout: 10m
+  go: '1.21'
+  concurrency: 4
+  issues-exit-code: 1
+  tests: true
+  build-tags:
+    - integration
+  skip-dirs:
+    - vendor
+    - bin
+    - .git
+    - docs
+    - scripts
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*_generated\\.go$"
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
+
+linters-settings:
+  # 循环复杂度检查
+  cyclop:
+    max-complexity: 15
+    package-average: 10.0
+    skip-tests: true
+
+  # 重复代码检查
+  dupl:
+    threshold: 100
+
+  # 错误处理检查
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+
+  # 函数长度检查
+  funlen:
+    lines: 100
+    statements: 50
+
+  # 导入顺序检查
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/IIXINGCHEN/music-api-proxy)
+    skip-generated: true
+
+  # 认知复杂度检查
+  gocognit:
+    min-complexity: 15
+
+  # 常量检查
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+    ignore-tests: true
+
+  # gocritic检查器配置
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - wrapperFunc
+
+  # 循环复杂度检查
+  gocyclo:
+    min-complexity: 15
+
+  # 魔法数字检查
+  gomnd:
+    settings:
+      mnd:
+        checks:
+          - argument
+          - case
+          - condition
+          - operation
+          - return
+        ignored-numbers: 0,1,2,3
+        ignored-files: "*_test.go"
+        ignored-functions: "strconv.*"
+
+  # 安全检查
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G104  # 审计未检查的错误
+      - G204  # 子进程启动审计
+    config:
+      G306: "0644"
+
+  # 行长度检查
+  lll:
+    line-length: 120
+    tab-width: 4
+
+  # 拼写检查
+  misspell:
+    locale: US
+    ignore-words:
+      - colour
+      - flavour
+
+  # 裸返回检查
+  nakedret:
+    max-func-lines: 30
+
+  # 嵌套if检查
+  nestif:
+    min-complexity: 4
+
+  # 预分配检查
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+  # revive检查器配置
+  revive:
+    min-confidence: 0.8
+    rules:
+      - name: atomic
+      - name: line-length-limit
+        arguments: [120]
+      - name: argument-limit
+        arguments: [8]
+      - name: cyclomatic
+        arguments: [15]
+
+  # 未使用参数检查
+  unparam:
+    check-exported: false
+
+  # 空白字符检查
+  whitespace:
+    multi-if: false
+    multi-func: false
+
+linters:
+  enable:
+    # 默认启用的检查器
+    - errcheck      # 检查未处理的错误
+    - gosimple      # 简化代码的建议
+    - govet         # Go官方的vet工具
+    - ineffassign   # 检测无效的赋值
+    - staticcheck   # 静态分析工具
+    - typecheck     # 类型检查
+    - unused        # 检查未使用的常量、变量、函数和类型
+
+    # 额外启用的检查器
+    - asciicheck    # 检查非ASCII字符
+    - bodyclose     # 检查HTTP响应体是否关闭
+    - cyclop        # 检查循环复杂度
+    - dupl          # 检查重复代码
+    - durationcheck # 检查time.Duration的使用
+    - errorlint     # 检查错误处理
+    - exhaustive    # 检查switch语句的完整性
+    - exportloopref # 检查循环中的指针引用
+    - forbidigo     # 禁止使用特定的标识符
+    - funlen        # 检查函数长度
+    - gci           # 控制Go导入顺序
+    - gocognit      # 检查认知复杂度
+    - goconst       # 检查可以用常量替换的重复字符串
+    - gocritic      # 提供许多检查的元检查器
+    - gocyclo       # 检查循环复杂度
+    - godot         # 检查注释是否以句号结尾
+    - gofmt         # 检查代码格式
+    - gofumpt       # 更严格的gofmt
+    - goimports     # 检查导入格式
+    - gomnd         # 检查魔法数字
+    - gomoddirectives # 检查go.mod指令
+    - gomodguard    # 检查go.mod中的依赖
+    - goprintffuncname # 检查printf风格函数的命名
+    - gosec         # 安全检查
+    - lll           # 检查行长度
+    - makezero      # 检查slice的零值初始化
+    - misspell      # 检查拼写错误
+    - nakedret      # 检查裸返回
+    - nestif        # 检查嵌套if语句
+    - nilerr        # 检查nil错误返回
+    - nlreturn      # 检查换行返回
+    - noctx         # 检查HTTP请求是否传递了context
+    - nolintlint    # 检查nolint指令的使用
+    - prealloc      # 检查slice预分配
+    - predeclared   # 检查预声明标识符的重新声明
+    - revive        # 快速、可配置、可扩展、灵活和美观的Go代码检查器
+    - rowserrcheck  # 检查sql.Rows.Err是否被检查
+    - sqlclosecheck # 检查sql.DB是否关闭
+    - thelper       # 检测测试助手函数
+    - tparallel     # 检测并行测试的不当使用
+    - unconvert     # 检查不必要的类型转换
+    - unparam       # 检查未使用的函数参数
+    - wastedassign  # 检查浪费的赋值
+    - whitespace    # 检查空白字符
+
+  disable:
+    - deadcode      # 已弃用，使用unused替代
+    - golint        # 已弃用，使用revive替代
+    - interfacer    # 已弃用
+    - maligned      # 已弃用，使用govet替代
+    - scopelint     # 已弃用，使用exportloopref替代
+    - structcheck   # 已弃用，使用unused替代
+    - varcheck      # 已弃用，使用unused替代
+
+issues:
+  # 排除使用默认排除规则
+  exclude-use-default: false
+
+  # 排除的规则
+  exclude:
+    # errcheck: 大多数程序忽略这些函数的错误，在大多数情况下这是可以的
+    - Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print.*|os\.(Un)?Setenv). is not checked
+
+    # govet: 常见的误报
+    - (possible misuse of unsafe.Pointer|should have signature)
+
+    # staticcheck: 开发者倾向于在switch中使用显式的break，所以忽略这个是可以的
+    - ineffective break statement. Did you mean to break out of the outer loop
+
+    # gosec: 对'unsafe'使用的误报太多
+    - G103
+
+    # gosec: 参数化shell调用的误报太多
+    - G204
+
+    # gosec: 重复的errcheck检查
+    - G104
+
+  # 排除的规则（按检查器）
+  exclude-rules:
+    # 排除测试文件中的某些检查
+    - path: _test\.go
+      linters:
+        - gomnd
+        - goconst
+        - funlen
+        - lll
+        - gocognit
+        - cyclop
+
+    # 排除main函数中的某些检查
+    - path: cmd/
+      linters:
+        - gomnd
+        - goconst
+        - gochecknoinits
+
+    # 排除生成的文件
+    - path: \.pb\.go
+      linters:
+        - all
+
+    # 排除特定的错误消息
+    - text: "weak cryptographic primitive"
+      linters:
+        - gosec
+
+    # 排除导入相关的错误（在某些情况下）
+    - source: "^//\\s*go:generate\\s"
+      linters:
+        - lll
+
+  # 最大问题数量，0表示无限制
+  max-issues-per-linter: 0
+
+  # 最大相同问题数量，0表示无限制
+  max-same-issues: 0
+
+  # 显示统计信息
+  new: false
+
+  # 修复问题
+  fix: false
+
+# 严重性配置
+severity:
+  default-severity: error
+  case-sensitive: false
+  rules:
+    - linters:
+        - dupl
+      severity: info
+    - linters:
+        - goconst
+      severity: info

@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: unm-server-service
+  namespace: unm-server
+  labels:
+    app: unm-server
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5678
+    targetPort: 5678
+    protocol: TCP
+    name: http
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: metrics
+  selector:
+    app: unm-server
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unm-redis-service
+  namespace: unm-server
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  selector:
+    app: redis
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: unm-server
+  labels:
+    app: nginx
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: nginx
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unm-server-nodeport
+  namespace: unm-server
+  labels:
+    app: unm-server
+spec:
+  type: NodePort
+  ports:
+  - port: 5678
+    targetPort: 5678
+    nodePort: 30678
+    protocol: TCP
+    name: http
+  - port: 9090
+    targetPort: 9090
+    nodePort: 30090
+    protocol: TCP
+    name: metrics
+  selector:
+    app: unm-server
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unm-server-headless
+  namespace: unm-server
+  labels:
+    app: unm-server
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 5678
+    targetPort: 5678
+    protocol: TCP
+    name: http
+  selector:
+    app: unm-server

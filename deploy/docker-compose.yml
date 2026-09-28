@@ -1,0 +1,73 @@
+# unified-music-api 一键编排
+# 网关 (Go) + 5 个平台微服务。网关统一入口：http://localhost:8080
+# 各平台原生接口经由 /api/v1/platform/{name}/* 透传，零改动兼容。
+name: unified-music-api
+
+services:
+  gateway:
+    build: ../gateway
+    ports:
+      - "8080:5678"
+    environment:
+      PORT: "5678"
+      PLATFORM_NETEASE_URL: http://netease:3001
+      PLATFORM_KUGOU_URL: http://kugou:3002
+      PLATFORM_UNM_URL: http://unm:3003
+      PLATFORM_LYRIC_URL: http://lyric:3004
+      PLATFORM_METING_URL: http://meting:3005
+    depends_on:
+      netease: { condition: service_started }
+      kugou: { condition: service_started }
+      unm: { condition: service_started }
+      lyric: { condition: service_started }
+      meting: { condition: service_started }
+    restart: unless-stopped
+
+  # 网易云音乐全接口（440，api-enhanced 原样迁入）
+  netease:
+    build: ../services/netease
+    environment:
+      PORT: "3001"
+    expose: ["3001"]
+    restart: unless-stopped
+
+  # 酷狗音乐全接口（228，KuGouMusicApi 原样迁入）
+  kugou:
+    build: ../services/kugou
+    environment:
+      PORT: "3002"
+    expose: ["3002"]
+    restart: unless-stopped
+
+  # 解灰 / 多源匹配（unm-music-api 原样迁入）
+  unm:
+    build: ../services/unm
+    environment:
+      PORT: "3003"
+      HOST: "0.0.0.0"
+    expose: ["3003"]
+    restart: unless-stopped
+
+  # TTML 逐字歌词（Lyric-Atlas-API + 独立运行入口）
+  lyric:
+    build: ../services/lyric
+    environment:
+      PORT: "3004"
+      # 回退链路直连内部网易云服务，无需外部 API
+      EXTERNAL_NCM_API_URL: http://netease:3001/lyric
+    expose: ["3004"]
+    restart: unless-stopped
+
+  # Meting 精简版（仅 spotify / ytmusic 独有 provider）
+  meting:
+    build:
+      context: ../services/meting
+      args:
+        PORT: "3005"
+    environment:
+      PORT: "3005"
+      # SPOTIFY_API / YT_API：上游解析后端地址（原项目依赖作者部署的解析服务），按需配置；未配置时对应 provider 返回 500（上游原生行为）
+      # SPOTIFY_API: https://your-spotify-backend.example
+      # YT_API: https://your-ytmusic-backend.example
+    expose: ["3005"]
+    restart: unless-stopped

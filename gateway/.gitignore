@@ -1,0 +1,111 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Log files
+*.log
+logs/
+
+# Build artifacts
+/bin/
+/dist/
+/build/
+
+# Coverage reports
+coverage.txt
+coverage.html
+coverage.out
+
+# Temporary files
+tmp/
+temp/
+
+# Configuration files with secrets
+config.prod.yaml
+config.local.yaml
+
+# Docker
+.dockerignore
+
+# Node.js files (to be removed after migration)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Legacy files (to be removed)
+index.js
+package.json
+routes/
+vercel.json
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+
+# 项目分析和实现文档（本地保留，禁止推送）
+
+
+/cypress/videos/
+/cypress/screenshots/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

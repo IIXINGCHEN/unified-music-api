@@ -1,0 +1,139 @@
+openapi: 3.1.0
+info:
+  title: unified-music-api
+  version: 1.0.0
+  description: |
+    统一音乐 API 网关。聚合网易云 / 酷狗全接口、解灰多源匹配、
+    TTML 逐字歌词、Spotify / YouTube Music，作为一个仓库对外提供服务。
+
+    平台原生接口经由统一路由透传，保持 100% 兼容：
+    `/api/v1/platform/{name}/{path}` → 对应平台微服务的 `/{path}`（query 原样透传）。
+
+    各平台原生接口文档见 services/ 下各服务自带文档。
+servers:
+  - url: http://localhost:8080
+    description: 本地 docker compose 网关
+
+paths:
+  /api/v1/platform/{name}/{path}:
+    get:
+      summary: 统一平台透传（GET）
+      description: |
+        将请求透传给对应平台微服务，路径与 query 原样转发。
+        例如 `/api/v1/platform/netease/song_url?id=123` 等价于直连网易云服务的 `/song_url?id=123`。
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [netease, kugou, unm, lyric, meting]
+          description: 平台名称
+        - name: path
+          in: path
+          required: true
+          schema: { type: string }
+          description: 平台原生路径（不含前导 /api/v1/platform/{name}）
+      responses:
+        "200": { description: 平台原生响应（透传） }
+        "404": { description: 未知平台 }
+        "502": { description: 平台服务不可用 }
+    post:
+      summary: 统一平台透传（POST）
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [netease, kugou, unm, lyric, meting]
+        - name: path
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: 平台原生响应（透传） }
+        "404": { description: 未知平台 }
+        "502": { description: 平台服务不可用 }
+
+  /api/v1/platform/netease/song_url:
+    get:
+      summary: 网易云歌曲播放链接（示例）
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: level
+          in: query
+          schema: { type: string, default: standard }
+      responses:
+        "200": { description: 透传网易云 /song_url 响应 }
+
+  /api/v1/platform/kugou/search:
+    get:
+      summary: 酷狗搜索（示例）
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: 透传酷狗搜索响应 }
+
+  /api/v1/platform/unm/match:
+    get:
+      summary: 解灰多源匹配（示例）
+      description: 根据网易云歌曲 ID 匹配其他平台可播放音源。
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: 匹配结果 }
+
+  /api/v1/platform/lyric/api/search:
+    get:
+      summary: TTML 逐字歌词搜索（示例）
+      description: 优先 TTML → GitHub 仓库（yrc/lrc/eslrc）→ 回退内部网易云服务。
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string, description: 网易云歌曲数字 ID }
+        - name: fixedVersion
+          in: query
+          schema: { type: string, enum: [ttml, yrc, lrc, eslrc] }
+        - name: fallback
+          in: query
+          schema: { type: string, default: "yrc,lrc,eslrc" }
+      responses:
+        "200": { description: "{found, id, lyric, format, source}" }
+
+  /api/v1/platform/meting/:
+    get:
+      summary: Meting 聚合（仅 spotify / ytmusic）
+      description: |
+        精简后的 Meting 服务，只保留 Spotify 与 YouTube Music 两个独有 provider。
+        网易云 / QQ / 酷狗 / 酷我请走 netease / kugou 平台（接口更全）。
+      parameters:
+        - name: server
+          in: query
+          schema: { type: string, enum: [spotify, ytmusic], default: spotify }
+        - name: type
+          in: query
+          schema: { type: string, enum: [playlist, song, url, pic, lrc], default: playlist }
+        - name: id
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { description: Meting 响应 }
+
+  /health:
+    get:
+      summary: 网关健康检查
+      responses:
+        "200": { description: ok }
+
+components: {}

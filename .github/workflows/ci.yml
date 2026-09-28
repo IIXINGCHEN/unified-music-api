@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gateway:
+    name: gateway (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache-dependency-path: gateway/go.sum
+      - name: gofmt check (changed files)
+        run: |
+          cd gateway
+          test -z "$(gofmt -l internal/controller/platform_controller.go pkg/validator/validator.go)"
+      - name: go vet
+        run: cd gateway && go vet ./...
+      - name: go build
+        run: cd gateway && go build ./...
+
+  services:
+    name: services (Node syntax)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: syntax check entry points
+        run: |
+          node --check services/netease/app.js
+          node --check services/kugou/app.js
+          node --check services/meting/node.js
+          node --check services/meting/app.js
+          node --check services/meting/src/providers/index.js
+          node --check services/meting/src/service/api.js
+      - name: meting provider allowlist
+        run: |
+          # 精简后只允许 spotify / ytmusic provider 存在
+          ls services/meting/src/providers/
+          test ! -e services/meting/src/providers/netease
+          test ! -e services/meting/src/providers/tencent
+
+  contracts:
+    name: contracts & compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: validate yaml files
+        run: |
+          pip install pyyaml -q
+          python - <<'EOF'
+          import yaml
+          for f in ["contracts/openapi.yaml", "deploy/docker-compose.yml"]:
+              yaml.safe_load(open(f))
+              print("OK", f)
+          spec = yaml.safe_load(open("contracts/openapi.yaml"))
+          assert "/api/v1/platform/{name}/{path}" in spec["paths"], "unified route missing"
+          names = spec["paths"]["/api/v1/platform/{name}/{path}"]["get"]["parameters"]
+          print("openapi paths:", list(spec["paths"].keys()))
+          EOF
+
+  assert:
+    name: repo assertions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: run assert.sh
+        run: bash scripts/assert.sh

@@ -1,0 +1,402 @@
+import axios from "axios";
+import {
+  env,
+  AUDIO_CONFIG,
+  PROVIDER_CONFIG,
+  UPSTREAM_APIS,
+  HTTP_CONFIG,
+  CACHE_POLICY,
+  withPlatformCookies,
+} from "../config/index.js";
+import { globalCache } from "./serviceCache.js";
+import { gdStudio } from "./serviceGdStudio.js";
+import { sanitizeParam, formatProxyUrl } from "../utils/utilString.js";
+import type { SongDetail, MatchedAudio, NcmAudioResult } from "../types/typeMusic.js";
+
+// 静态导入 UNM 引擎（Node.js ESM 规范要求深层导入必须显式指定 .js 扩展名）
+// @ts-ignore -- UNM 引擎无类型声明文件，运行时以 any 使用
+import * as unmConstsNS from "@unblockneteasemusic/server/src/consts.js";
+// @ts-ignore -- 同上
+import * as unmMatchNS from "@unblockneteasemusic/server";
+
+const unmConsts = unmConstsNS as any;
+
+// UNM 引擎匹配结果
+type UnmMatchResult = {
+  url?: string;
+  br?: number;
+  size?: number;
+  source?: string;
+  md5?: string | null;
+} | null;
+
+// UNM 引擎匹配超时（毫秒）：第三方引擎内部无统一超时，DNS 挂起/慢连接会无限期
+// 拖住请求；超时后抛错走降级链，不阻塞 /match 主链路
+const UNM_MATCH_TIMEOUT_MS = 15000;
+
+/**
+ * 获取所有支持的音源列表（与 @unblockneteasemusic/server 最新版 0.28.0 完全对齐）
+ */
+export function getAvailableProviders(): string[] {
+  const providers = Object.keys(unmConsts.PROVIDERS || {});
+  if (!providers.includes("gdstudio")) {
+    providers.unshift("gdstudio");
+  }
+  return providers;
+}
+
+/**
+ * 动态修复与注入 UNM Provider 体系（兼容 0.28.0+ 最新版）
+ */
+export function setupUnmProviders(): void {
+  // 1. 注入 gdstudio Provider
+  unmConsts.PROVIDERS.gdstudio = {
+    async check(info: any) {
+      try {
+        const keyword = `${info.name || ""} ${info.artists?.[0]?.name || ""}`.trim();
+        if (!keyword) return null;
+        const list = await gdStudio.search(keyword, env.DEFAULT_AUDIO_SOURCE, 5, 1);
+        if (!Array.isArray(list) || list.length === 0) return null;
+
+        const target = list.find((item) => item.name === info.name) || list[0];
+        const audio = await gdStudio.getUrl(target.id, env.DEFAULT_AUDIO_SOURCE, info.br || env.DEFAULT_BITRATE);
+        return audio?.url || null;
+      } catch {
+        return null;
+      }
+    },
+  };
+
+  // 2. 修复/增强 pyncmd Provider（对接到最新 GD Studio 引擎）
+  unmConsts.PROVIDERS.pyncmd = {
+    async check(info: any) {
+      try {
+        const audio = await gdStudio.getUrl(info.id, env.DEFAULT_SEARCH_SOURCE, info.br || env.DEFAULT_BITRATE);
+        if (audio && audio.url) {
+          return audio.url;
+        }
+        // 注意：注入的 key 是全小写 "gdstudio"，此处必须同名（曾误写为 gdStudio 导致降级永不生效）
+        return await unmConsts.PROVIDERS.gdstudio.check(info);
+      } catch {
+        return null;
+      }
+    },
+  };
+
+  // 3. 修复/增强 joox Provider（免自备 Cookie 解析，通过 GD Studio 检索）
+  unmConsts.PROVIDERS.joox = {
+    async check(info: any) {
+      try {
+        const keyword = `${info.name || ""} ${info.artists?.[0]?.name || ""}`.trim();
+        if (!keyword) return null;
+        const list = await gdStudio.search(keyword, "joox", 5, 1);
+        if (!Array.isArray(list) || list.length === 0) return null;
+
+        const target = list.find((item) => item.name === info.name) || list[0];
+        const audio = await gdStudio.getUrl(target.id, "joox", info.br || env.DEFAULT_BITRATE);
+        return audio?.url || null;
+      } catch {
+        return null;
+      }
+    },
+  };
+
+  // 4. 更新默认音源列表优先级
+  const prioritySources = [...PROVIDER_CONFIG.DEFAULT_PRIORITY_LIST];
+  const finalSources = [
+    ...prioritySources,
+    ...Object.keys(unmConsts.PROVIDERS).filter((p) => !prioritySources.includes(p as any)),
+  ];
+
+  unmConsts.DEFAULT_SOURCE.length = 0;
+  unmConsts.DEFAULT_SOURCE.push(...finalSources);
+  console.log(`[UNM Engine 0.28.0+] 适配完成，总支持音源数: ${Object.keys(unmConsts.PROVIDERS).length}，默认优先顺序: ${unmConsts.DEFAULT_SOURCE.slice(0, 6).join(", ")}...`);
+}
+
+// 自动初始化 Provider
+setupUnmProviders();
+
+/**
+ * 获取网易云官方歌曲元数据
+ */
+export async function getNeteaseSongDetail(id: string | number): Promise<SongDetail | null> {
+  const cleanId = sanitizeParam(id, 50);
+  if (!cleanId) return null;
+
+  const cacheKey = `ncm:detail:${cleanId}`;
+  // 用 has() 区分"未缓存"与"缓存的 null"：null 是哨兵，表示该 id 已确认无元数据
+  // （歌曲不存在/下架），5 分钟内不再重复打网易云
+  if (globalCache.has(cacheKey)) {
+    return globalCache.get(cacheKey) as SongDetail | null;
+  }
+
+  try {
+    const res = await axios.get(`${UPSTREAM_APIS.NETEASE_SONG_DETAIL}?ids=[${encodeURIComponent(cleanId)}]`, {
+      timeout: 6000,
+      headers: {
+        Referer: UPSTREAM_APIS.NETEASE_REFERER,
+        "User-Agent": HTTP_CONFIG.BROWSER_USER_AGENT,
+      },
+    });
+    const song = res.data?.songs?.[0];
+    if (song) {
+      const detail: SongDetail = {
+        id: String(song.id),
+        name: song.name || "",
+        artist: (song.artists || []).map((a: any) => a.name).join(" / "),
+        album: song.album?.name || "",
+        picUrl: song.album?.picUrl || "",
+        duration: song.duration || 0,
+      };
+      globalCache.set(cacheKey, detail, env.CACHE_TTL_SONG_DETAIL);
+      return detail;
+    }
+    // 上游明确返回空（歌曲不存在/下架）：写入短 TTL 负缓存，抑制重复上游请求。
+    // 网络异常走下面的 catch，不缓存，避免故障期间锁定错误结果。
+    globalCache.set(cacheKey, null, CACHE_POLICY.TTL_SONG_DETAIL_NEGATIVE);
+  } catch (err: any) {
+    console.warn(`[NCM Detail] 获取歌曲 ${cleanId} 元数据失败: ${err.message}`);
+  }
+  return null;
+}
+
+/**
+ * 核心歌曲匹配与解灰
+ */
+export async function matchSong(
+  id: string | number,
+  servers?: string[] | null,
+  br: number | string = env.DEFAULT_BITRATE
+): Promise<MatchedAudio> {
+  const cleanId = sanitizeParam(id, 50);
+  if (!cleanId) {
+    throw new Error("缺少歌曲 ID 参数");
+  }
+
+  const cleanBr = (AUDIO_CONFIG.SUPPORTED_BITRATES as readonly number[]).includes(Number(br))
+    ? Number(br)
+    : env.DEFAULT_BITRATE;
+
+  const rawServers = Array.isArray(servers) && servers.length > 0
+    ? servers
+    : env.DEFAULT_MATCH_SERVERS.split(",").map((s) => s.trim()).filter(Boolean);
+
+  // 音源有效性校验：过滤不存在的音源名，全量非法时回退默认优先级并打日志
+  const availableProviders = new Set(Object.keys(unmConsts.PROVIDERS || {}));
+  let serverList = rawServers.filter((s) => availableProviders.has(s));
+  if (serverList.length === 0) {
+    console.warn(`[UNM Match] 音源配置无效 (${rawServers.join(",") || "空"})，已回退默认优先级`);
+    serverList = [...PROVIDER_CONFIG.DEFAULT_PRIORITY_LIST].filter((s) => availableProviders.has(s));
+  }
+
+  // 缓存键的音源列表部分按顺序语义条件化。
+  //
+  // UNM 引擎按 process.env 选择调度模式：
+  //   SELECT_MAX_BR        -> allSettled 后取最高码率，**与顺序无关**
+  //   FOLLOW_SOURCE_ORDER  -> for 顺序尝试取首个成功，**顺序即语义**
+  //   两者皆假              -> Promise.any 并发竞速，**与顺序无关**
+  //
+  // 不归一时，`?server=a,b,c` 与 `?server=c,b,a` 各占一个 key，
+  // N 个音源产生 N! 个 key（5 个即 120 个，全在参数长度上限内），
+  // 每个 key 各自触发一整套 UNM 级联，同时击穿 LRU 与 single-flight。
+  const orderMatters = Boolean(process.env.FOLLOW_SOURCE_ORDER);
+  const cacheKeySourcePart = orderMatters ? serverList.join(",") : [...serverList].sort().join(",");
+  const cacheKey = `match:${cleanId}:${cacheKeySourcePart}:${cleanBr}`;
+  const cached = globalCache.get(cacheKey) as MatchedAudio | null;
+  if (cached) {
+    return cached;
+  }
+
+  // single-flight：同一 key 的并发请求共享一次完整 UNM 级联，避免缓存击穿时的雷鸣群。
+  // 缓存写入仍由内部逻辑完成（成功才 set），失败不缓存且在途记录自动清除以便重试。
+  return globalCache.getOrFetch(cacheKey, async (): Promise<MatchedAudio> => {
+  // 1. 获取网易云元数据
+  const detail = await getNeteaseSongDetail(cleanId);
+
+  // 2. 尝试使用 UNM 引擎进行多源匹配（ESM 命名空间下取 default 导出）
+  const unmMatchFn: any = (unmMatchNS as any).default ?? unmMatchNS;
+  let matchResult: UnmMatchResult = null;
+  try {
+    const songData = detail
+      ? {
+          id: cleanId,
+          name: detail.name,
+          artists: detail.artist.split(" / ").map((n) => ({ name: n })),
+          album: { name: detail.album, picUrl: detail.picUrl },
+          duration: detail.duration,
+          br: cleanBr,
+        }
+      : undefined;
+    // 平台 Cookie 限时注入（finally 中删除，不常驻 process.env）+ 超时保护：
+    // 第三方引擎内部无统一超时，DNS 挂起会无限期拖住请求；15s 超时后抛错走降级链。
+    const matchPromise: Promise<UnmMatchResult> = withPlatformCookies(() =>
+      unmMatchFn(cleanId, serverList, songData)
+    );
+    // 防未处理拒绝：超时胜出后，引擎 promise 后续的 reject 不应触发 unhandledRejection
+    matchPromise.catch(() => {});
+    matchResult = await Promise.race([
+      matchPromise,
+      new Promise<never>((_, reject) => {
+        const timer = setTimeout(() => reject(new Error("UNM 匹配超时")), UNM_MATCH_TIMEOUT_MS);
+        // 定时器不应阻止进程退出
+        (timer as unknown as { unref?: () => void }).unref?.();
+      }),
+    ]);
+  } catch {
+    console.warn(`[UNM Match] UNM 引擎直接匹配未命中 (${cleanId})，启动备选智能降级...`);
+  }
+
+  // 3. 若 UNM 未能返回 URL，使用 GD Studio 智能检索降级
+  if (!matchResult || !matchResult.url) {
+    if (detail && detail.name) {
+      const keyword = `${detail.name} ${detail.artist}`.trim();
+      const gdList = await gdStudio.search(keyword, env.DEFAULT_AUDIO_SOURCE, 5, 1);
+      if (Array.isArray(gdList) && gdList.length > 0) {
+        const topTrack = gdList.find((t) => t.name === detail.name) || gdList[0];
+        const audio = await gdStudio.getUrl(topTrack.id, env.DEFAULT_AUDIO_SOURCE, cleanBr);
+        // 非 ok 状态（unavailable/no_copyright/trial）继续尝试下一个源，而非当成普通失败直接抛错
+        if (audio && audio.status === "ok" && audio.url) {
+          matchResult = {
+            url: audio.url,
+            br: audio.br || cleanBr * 1000,
+            size: audio.size || 0,
+            source: env.DEFAULT_AUDIO_SOURCE,
+            md5: null,
+          };
+        } else if (audio) {
+          console.warn(`[UNM Match] GD 检索源不可用 (status=${audio.status})，继续降级`);
+        }
+      }
+    }
+  }
+
+  // 4. 再次降级：直接尝试 GD Studio 的 netease 源
+  if (!matchResult || !matchResult.url) {
+    const directNetease = await gdStudio.getUrl(cleanId, env.DEFAULT_SEARCH_SOURCE, cleanBr);
+    if (directNetease && directNetease.status === "ok" && directNetease.url) {
+      matchResult = {
+        url: directNetease.url,
+        br: directNetease.br || cleanBr * 1000,
+        size: directNetease.size || 0,
+        source: env.DEFAULT_SEARCH_SOURCE,
+        md5: null,
+      };
+    } else if (directNetease) {
+      console.warn(`[UNM Match] netease 直连源不可用 (status=${directNetease.status})`);
+    }
+  }
+
+  if (!matchResult || !matchResult.url) {
+    throw new Error("所有可用音源均无法匹配到该歌曲播放链接");
+  }
+
+  // 5. 反代 URL 处理
+  const finalUrl = matchResult.url;
+  const proxyUrl = formatProxyUrl(finalUrl, env.PROXY_URL);
+
+  const responseData: MatchedAudio = {
+    id: cleanId,
+    url: finalUrl,
+    br: matchResult.br || cleanBr * 1000,
+    size: matchResult.size || 0,
+    source: matchResult.source || "gdstudio",
+    md5: matchResult.md5 || null,
+    proxyUrl,
+    title: detail?.name || "",
+    artist: detail?.artist || "",
+    album: detail?.album || "",
+    pic: detail?.picUrl || "",
+  };
+
+  globalCache.set(cacheKey, responseData, env.CACHE_TTL_AUDIO);
+  return responseData;
+  });
+}
+
+/**
+ * 获取网易云指定音质歌曲
+ */
+export async function getNeteaseSong(
+  id: string | number,
+  br: number | string = env.DEFAULT_BITRATE
+): Promise<NcmAudioResult> {
+  const cleanId = sanitizeParam(id, 50);
+  const cleanBr = (AUDIO_CONFIG.SUPPORTED_BITRATES as readonly number[]).includes(Number(br))
+    ? Number(br)
+    : env.DEFAULT_BITRATE;
+
+  const direct = await gdStudio.getUrl(cleanId, env.DEFAULT_SEARCH_SOURCE, cleanBr);
+  if (direct && direct.url) {
+    const proxyUrl = formatProxyUrl(direct.url, env.PROXY_URL);
+    return {
+      id: cleanId,
+      br: direct.br || cleanBr * 1000,
+      url: direct.url,
+      size: direct.size || 0,
+      source: env.DEFAULT_SEARCH_SOURCE,
+      proxyUrl,
+    };
+  }
+
+  // 自动解灰
+  const matched = await matchSong(cleanId, [...PROVIDER_CONFIG.PRIMARY_DECRYPT_PROVIDERS], cleanBr);
+  return {
+    id: cleanId,
+    br: matched.br || cleanBr * 1000,
+    url: matched.url,
+    size: matched.size || 0,
+    source: matched.source || env.DEFAULT_AUDIO_SOURCE,
+    proxyUrl: matched.proxyUrl || matched.url,
+  };
+}
+
+/**
+ * 从其他音源（酷我/joox等）按歌名搜索并获取播放链接
+ */
+export async function getOtherSourceSong(name: string): Promise<{ url: string; source: string }> {
+  const cleanName = sanitizeParam(name, 100);
+  if (!cleanName) {
+    throw new Error("缺少歌曲名称参数");
+  }
+
+  const cacheKey = `other:${cleanName}`;
+  const cached = globalCache.get(cacheKey) as { url: string; source: string } | null;
+  if (cached) return cached;
+
+  let searchRes = await gdStudio.search(cleanName, env.DEFAULT_AUDIO_SOURCE, 1, 1);
+  let targetSource: string = env.DEFAULT_AUDIO_SOURCE;
+
+  // 降级源必须取上游实际支持的 search 源。实测 GD Studio 仅支持
+  // netease / joox / bilibili / netease_album 的 search；
+  // kuwo、qq、kugou、migu 等会被上游 HTTP 400 拒绝（"Value of `source` is not supported."），
+  // 原 "kuwo" 降级永远抛错，改走受支持源并逐个 try/catch。
+  if (!searchRes || searchRes.length === 0) {
+    for (const fb of ["netease", "bilibili"]) {
+      try {
+        const fbRes = await gdStudio.search(cleanName, fb, 1, 1);
+        if (fbRes && fbRes.length > 0) {
+          searchRes = fbRes;
+          targetSource = fb;
+          break;
+        }
+      } catch {
+        // 该降级源不可用，继续下一个
+      }
+    }
+  }
+
+  if (!searchRes || searchRes.length === 0) {
+    throw new Error(`未能在其他音源中找到歌曲: ${cleanName}`);
+  }
+
+  const songId = searchRes[0].id || searchRes[0].url_id;
+  const audio = await gdStudio.getUrl(songId, targetSource, env.DEFAULT_BITRATE);
+
+  if (!audio || !audio.url) {
+    throw new Error("未能获取到音频播放链接");
+  }
+
+  const result = { url: audio.url, source: targetSource };
+  globalCache.set(cacheKey, result, env.CACHE_TTL_AUDIO);
+  return result;
+}

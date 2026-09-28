@@ -1,0 +1,98 @@
+# 开发环境配置
+app:
+  mode: "development"
+  debug: true
+
+# 服务器配置
+server:
+  port: 5678
+  enable_cors: true
+
+# 日志配置
+logging:
+  level: "debug"
+  format: "text"  # 开发环境使用文本格式便于阅读
+  output: "stdout"
+  enable_caller: true
+  enable_stacktrace: true
+
+# 音源配置
+sources:
+  # 开发环境启用所有音源用于测试
+  enabled_sources: ["gdstudio", "unm_server"]
+  test_sources: ["gdstudio", "unm_server"]
+  
+  # 较短的超时时间用于快速调试
+  timeout: "10s"
+  retry_count: 1
+
+  unm_server:
+    timeout: "10s"
+    retry_count: 1
+  
+  gdstudio:
+    timeout: "10s"
+    retry_count: 1
+
+  music_info_resolver:
+    cache_ttl: "300s"  # 开发环境缓存时间较短
+
+# 缓存配置
+cache:
+  enabled: true
+  ttl: "5m"  # 开发环境缓存时间较短
+  max_size: "10MB"
+
+# 性能配置
+performance:
+  max_concurrent_requests: 100
+  request_timeout: "10s"
+  
+  rate_limit:
+    enabled: false  # 开发环境禁用限流
+
+# 安全配置
+security:
+  enable_auth: false  # 开发环境禁用认证
+
+# 监控配置
+monitoring:
+  enabled: true
+  
+  metrics:
+    enabled: true
+    port: 9090
+  
+  health_check:
+    enabled: true
+    interval: "10s"
+  
+  profiling:
+    enabled: true  # 开发环境启用性能分析
+
+# 插件配置
+plugins:
+  # 开发环境启用所有插件用于测试
+  middleware:
+    - name: "cors"
+      enabled: true
+    - name: "logging"
+      enabled: true
+    - name: "recovery"
+      enabled: true
+    - name: "debug"
+      enabled: true
+
+# 路由配置
+routes:
+  endpoints:
+    # 开发环境添加调试端点
+    debug:
+      path: "/debug"
+      methods: ["GET"]
+      middleware: ["cors", "logging"]
+    
+    config:
+      path: "/config"
+      methods: ["GET"]
+      middleware: ["cors", "logging"]

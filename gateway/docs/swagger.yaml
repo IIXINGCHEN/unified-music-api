@@ -1,0 +1,493 @@
+openapi: 3.0.3
+info:
+  title: Music API Proxy API
+  description: 解锁网易云音乐灰色歌曲的Go语言实现
+  version: 1.0.4
+  contact:
+    name: Music API Proxy
+    url: https://github.com/UnblockNeteaseMusic/server-go
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5678
+    description: 本地开发服务器
+  - url: https://api.yourdomain.com
+    description: 生产环境服务器
+
+paths:
+  # 健康检查
+  /health:
+    get:
+      tags:
+        - 健康检查
+      summary: 健康检查
+      description: 获取系统健康状态
+      responses:
+        '200':
+          description: 健康
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: 不健康
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /ping:
+    get:
+      tags:
+        - 健康检查
+      summary: 简单健康检查
+      description: 简单的健康检查接口
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # 音乐相关接口
+  /api/v1/match:
+    get:
+      tags:
+        - 音乐
+      summary: 匹配音乐
+      description: 根据音乐ID匹配播放链接
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: 音乐ID
+          schema:
+            type: string
+        - name: server
+          in: query
+          required: false
+          description: 指定音源，逗号分隔
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 匹配成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MatchResponse'
+        '400':
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ncm:
+    get:
+      tags:
+        - 音乐
+      summary: 获取网易云音乐
+      description: 获取网易云音乐播放链接
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: 音乐ID
+          schema:
+            type: string
+        - name: br
+          in: query
+          required: false
+          description: 音质参数
+          schema:
+            type: string
+            enum: [128, 192, 320, 740, 999]
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/NCMGetResponse'
+
+  /api/v1/search:
+    get:
+      tags:
+        - 音乐
+      summary: 搜索音乐
+      description: 根据关键词搜索音乐
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          description: 搜索关键词
+          schema:
+            type: string
+        - name: sources
+          in: query
+          required: false
+          description: 音源列表，逗号分隔
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: 结果数量限制
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: 搜索成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SearchResult'
+
+
+
+  # 系统相关接口
+  /api/v1/system/info:
+    get:
+      tags:
+        - 系统
+      summary: 获取系统信息
+      description: 获取系统基本信息
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SystemInfoResponse'
+
+  /api/v1/system/metrics:
+    get:
+      tags:
+        - 系统
+      summary: 获取系统指标
+      description: 获取系统性能指标
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MetricsResponse'
+
+  /api/v1/system/sources:
+    get:
+      tags:
+        - 系统
+      summary: 获取音源状态
+      description: 获取所有音源的状态信息
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SourceStatus'
+
+components:
+  schemas:
+    # 基础响应结构
+    SuccessResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "操作成功"
+        data:
+          type: object
+        timestamp:
+          type: integer
+          format: int64
+          example: 1640995200
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "参数错误"
+        details:
+          type: object
+        timestamp:
+          type: integer
+          format: int64
+          example: 1640995200
+
+    # 健康检查响应
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: integer
+          format: int64
+        uptime:
+          type: string
+        checks:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CheckResult'
+
+    CheckResult:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+        duration:
+          type: string
+
+    # 音乐相关模型
+    MatchResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        proxy_url:
+          type: string
+        quality:
+          type: string
+        source:
+          type: string
+        info:
+          $ref: '#/components/schemas/MusicInfo'
+
+    NCMGetResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        br:
+          type: string
+        url:
+          type: string
+        proxy_url:
+          type: string
+        quality:
+          type: string
+        info:
+          $ref: '#/components/schemas/MusicInfo'
+
+    MusicInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        artist:
+          type: string
+        album:
+          type: string
+        duration:
+          type: integer
+          format: int64
+        pic_url:
+          type: string
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        artist:
+          type: string
+        album:
+          type: string
+        duration:
+          type: integer
+          format: int64
+        source:
+          type: string
+        score:
+          type: number
+          format: float
+
+
+
+    # 系统相关模型
+    SystemInfoResponse:
+      type: object
+      properties:
+        version:
+          type: string
+        enable_flac:
+          type: boolean
+        build_time:
+          type: string
+        git_commit:
+          type: string
+        go_version:
+          type: string
+        uptime:
+          type: string
+
+    MetricsResponse:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        uptime:
+          type: string
+        go_version:
+          type: string
+        num_goroutines:
+          type: integer
+        num_cpu:
+          type: integer
+        memory_stats:
+          $ref: '#/components/schemas/MemoryStats'
+        request_stats:
+          $ref: '#/components/schemas/RequestStats'
+        error_stats:
+          $ref: '#/components/schemas/ErrorStats'
+
+    MemoryStats:
+      type: object
+      properties:
+        alloc:
+          type: integer
+          format: int64
+        total_alloc:
+          type: integer
+          format: int64
+        sys:
+          type: integer
+          format: int64
+        heap_alloc:
+          type: integer
+          format: int64
+        heap_sys:
+          type: integer
+          format: int64
+
+    RequestStats:
+      type: object
+      properties:
+        total_requests:
+          type: integer
+          format: int64
+        success_requests:
+          type: integer
+          format: int64
+        error_requests:
+          type: integer
+          format: int64
+        average_latency:
+          type: number
+          format: float
+        requests_per_second:
+          type: number
+          format: float
+
+    ErrorStats:
+      type: object
+      properties:
+        total_errors:
+          type: integer
+          format: int64
+        errors_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        errors_by_code:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        last_error:
+          type: string
+        last_error_time:
+          type: string
+          format: date-time
+
+    SourceStatus:
+      type: object
+      properties:
+        name:
+          type: string
+        enabled:
+          type: boolean
+        available:
+          type: boolean
+        last_check:
+          type: string
+          format: date-time
+        response_time:
+          type: string
+        error_count:
+          type: integer
+        last_error:
+          type: string
